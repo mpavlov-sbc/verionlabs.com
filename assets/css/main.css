@@ -97,7 +97,8 @@
     .accent-word {
         position: relative;
         display: inline-block;
-        color: #f59e0b; /* Beautiful golden/amber color */
+        color: #f59e0b;
+        /* Beautiful golden/amber color */
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         /* Prevent layout shifts */
         will-change: transform, color;
@@ -106,31 +107,40 @@
 
     /* Enhanced accent effect on title hover */
     .hero-title:hover .accent-word {
-        color: #d97706; /* Deeper amber on hover */
+        color: #d97706;
+        /* Deeper amber on hover */
         text-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
         /* Use transform3d to avoid layout reflows */
         transform: translate3d(0, -1px, 0);
     }
 
     @keyframes gradientShift {
-        0%, 100% {
+
+        0%,
+        100% {
             background-position: 0% 50%;
         }
+
         50% {
             background-position: 100% 50%;
         }
     }
 
     @keyframes dynamicGradient {
-        0%, 100% {
+
+        0%,
+        100% {
             background-position: 0% 50%;
         }
+
         25% {
             background-position: 100% 0%;
         }
+
         50% {
             background-position: 100% 100%;
         }
+
         75% {
             background-position: 0% 100%;
         }
@@ -176,12 +186,15 @@
             transform: translateY(100vh) rotate(0deg);
             opacity: 0;
         }
+
         10% {
             opacity: 1;
         }
+
         90% {
             opacity: 1;
         }
+
         100% {
             transform: translateY(-100px) rotate(360deg);
             opacity: 0;
@@ -212,7 +225,7 @@
     }
 
     .text-shadow-glow {
-        text-shadow: 
+        text-shadow:
             0 0 20px rgba(102, 126, 234, 0.2),
             0 0 40px rgba(102, 126, 234, 0.1);
         /* Better text rendering */
@@ -248,15 +261,19 @@
         from {
             width: 0;
         }
+
         to {
             width: 100%;
         }
     }
 
     @keyframes blink-caret {
-        from, to {
+
+        from,
+        to {
             border-color: transparent;
         }
+
         50% {
             border-color: #667eea;
         }

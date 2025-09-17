@@ -1,24 +1,24 @@
 {
-  "name": "verionlabs-website",
-  "private": true,
-  "scripts": {
-    "build": "nuxt build",
-    "dev": "nuxt dev",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
-  },
-  "devDependencies": {
-    "@nuxt/devtools": "latest",
-    "@nuxtjs/tailwindcss": "^6.8.4",
-    "nuxt": "^3.8.0",
-    "@nuxtjs/sitemap": "^5.0.0",
-    "@nuxtjs/robots": "^3.0.0"
-  },
-  "dependencies": {
-    "@headlessui/vue": "^1.7.16",
-    "@heroicons/vue": "^2.0.18",
-    "@nuxt/image": "^1.0.0",
-    "@vueuse/nuxt": "^10.5.0"
-  }
+    "name": "verionlabs-website",
+    "private": true,
+    "scripts": {
+        "build": "nuxt build",
+        "dev": "nuxt dev",
+        "generate": "nuxt generate",
+        "preview": "nuxt preview",
+        "postinstall": "nuxt prepare"
+    },
+    "devDependencies": {
+        "@nuxt/devtools": "latest",
+        "@nuxtjs/tailwindcss": "^6.8.4",
+        "nuxt": "^3.8.0",
+        "@nuxtjs/sitemap": "^5.0.0",
+        "@nuxtjs/robots": "^3.0.0"
+    },
+    "dependencies": {
+        "@headlessui/vue": "^1.7.16",
+        "@heroicons/vue": "^2.0.18",
+        "@nuxt/image": "^1.0.0",
+        "@vueuse/nuxt": "^10.5.0"
+    }
 }
