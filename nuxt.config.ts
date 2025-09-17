@@ -3,10 +3,8 @@ export default defineNuxtConfig({
     devtools: { enabled: true },
     modules: [
         '@nuxtjs/tailwindcss',
-        '@nuxt/image',
-        '@nuxtjs/sitemap',
-        '@nuxtjs/robots',
-        '@vueuse/nuxt'
+        '@nuxtjs/google-fonts',
+        '@nuxt/devtools'
     ],
 
     // App configuration
@@ -49,15 +47,13 @@ export default defineNuxtConfig({
         cssPath: '~/assets/css/main.css'
     },
 
-    // Image optimization
-    image: {
-        // Configure for static generation and GitHub Pages
-        format: ['webp', 'jpg', 'png'],
-        quality: 80,
-        domains: ['picsum.photos'],
-        alias: {
-            unsplash: 'https://picsum.photos'
-        }
+    // Google Fonts configuration
+    googleFonts: {
+        families: {
+            Inter: [400, 500, 600, 700, 800],
+            'Space Grotesk': [400, 500, 600, 700]
+        },
+        display: 'swap'
     },
 
     // SEO modules configuration
