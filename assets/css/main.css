@@ -4,58 +4,263 @@
 
 /* Custom base styles */
 @layer base {
-  html {
-    scroll-behavior: smooth;
-  }
-  
-  body {
-    @apply font-sans text-gray-900 antialiased;
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-bold;
-  }
-  
-  h1 {
-    @apply text-4xl md:text-5xl lg:text-6xl;
-  }
-  
-  h2 {
-    @apply text-3xl md:text-4xl lg:text-5xl;
-  }
-  
-  h3 {
-    @apply text-2xl md:text-3xl;
-  }
-  
-  h4 {
-    @apply text-xl md:text-2xl;
-  }
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply font-sans text-gray-900 antialiased;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-bold;
+    }
+
+    h1 {
+        @apply text-4xl md:text-5xl lg:text-6xl;
+    }
+
+    h2 {
+        @apply text-3xl md:text-4xl lg:text-5xl;
+    }
+
+    h3 {
+        @apply text-2xl md:text-3xl;
+    }
+
+    h4 {
+        @apply text-xl md:text-2xl;
+    }
 }
 
 /* Custom component styles */
 @layer components {
-  .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
-  }
-  
-  .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
-  }
-  
-  .btn-outline {
-    @apply border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
-  }
-  
-  .card {
-    @apply bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 p-6;
-  }
-  
-  .section-padding {
-    @apply py-16 md:py-24;
-  }
-  
-  .container-custom {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-  }
+    .btn-primary {
+        @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+    }
+
+    .btn-secondary {
+        @apply bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+    }
+
+    .btn-outline {
+        @apply border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+    }
+
+    .card {
+        @apply bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 p-6;
+    }
+
+    .section-padding {
+        @apply py-16 md:py-24;
+    }
+
+    .container-custom {
+        @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    }
+
+    /* Hero Title Advanced Animations */
+    .hero-title {
+        position: relative;
+        display: inline-block;
+        /* Clean, solid color by default */
+        color: #1e40af;
+        font-weight: 800;
+        /* Crisp text rendering */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+        /* Smooth transitions */
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translateZ(0);
+        /* Prevent layout shifts by containing transforms */
+        will-change: transform;
+        transform-origin: center;
+    }
+
+    /* Enhanced effect on hover - using color transition instead of background-clip */
+    .hero-title:hover {
+        /* Smooth color transition to a lighter, more elegant purple */
+        color: #6366f1;
+        /* Use transform3d to avoid layout reflows */
+        transform: scale3d(1.02, 1.02, 1) translateZ(0);
+        filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.15));
+        text-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
+    }
+
+    /* Special accent styling for "Modern Business" words */
+    .accent-word {
+        position: relative;
+        display: inline-block;
+        color: #f59e0b; /* Beautiful golden/amber color */
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Prevent layout shifts */
+        will-change: transform, color;
+        transform-origin: center;
+    }
+
+    /* Enhanced accent effect on title hover */
+    .hero-title:hover .accent-word {
+        color: #d97706; /* Deeper amber on hover */
+        text-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+        /* Use transform3d to avoid layout reflows */
+        transform: translate3d(0, -1px, 0);
+    }
+
+    @keyframes gradientShift {
+        0%, 100% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+    }
+
+    @keyframes dynamicGradient {
+        0%, 100% {
+            background-position: 0% 50%;
+        }
+        25% {
+            background-position: 100% 0%;
+        }
+        50% {
+            background-position: 100% 100%;
+        }
+        75% {
+            background-position: 0% 100%;
+        }
+    }
+
+    .word-reveal {
+        display: inline-block;
+        opacity: 0;
+        transform: translateY(20px);
+        animation: wordReveal 0.8s ease-out forwards;
+        /* Fix for smooth text rendering */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        will-change: transform, opacity;
+    }
+
+    @keyframes wordReveal {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .floating-particles {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .particle {
+        position: absolute;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border-radius: 50%;
+        opacity: 0;
+        animation: floatUp 6s linear infinite;
+    }
+
+    @keyframes floatUp {
+        0% {
+            transform: translateY(100vh) rotate(0deg);
+            opacity: 0;
+        }
+        10% {
+            opacity: 1;
+        }
+        90% {
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100px) rotate(360deg);
+            opacity: 0;
+        }
+    }
+
+    .cursor-glow {
+        position: fixed;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(102, 126, 234, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        transition: transform 0.1s ease-out;
+        mix-blend-mode: screen;
+    }
+
+    .magnetic-effect {
+        transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        /* Improve rendering performance */
+        transform: translateZ(0);
+        will-change: transform;
+    }
+
+    .magnetic-effect:hover {
+        transform: scale(1.02) translateZ(0);
+    }
+
+    .text-shadow-glow {
+        text-shadow: 
+            0 0 20px rgba(102, 126, 234, 0.2),
+            0 0 40px rgba(102, 126, 234, 0.1);
+        /* Better text rendering */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    .typewriter {
+        border-right: 3px solid #667eea;
+        animation: blink-caret 0.75s step-end infinite;
+        /* Better text handling */
+        display: inline-block;
+        width: auto;
+        min-width: 0;
+        /* Allow wrapping for longer text */
+        white-space: normal;
+        word-wrap: break-word;
+    }
+
+    /* Only show cursor when actively typing */
+    .typewriter.typing-active {
+        border-right: 3px solid #667eea;
+        animation: blink-caret 0.75s step-end infinite;
+    }
+
+    /* Hide cursor when not typing */
+    .typewriter:not(.typing-active) {
+        border-right: 3px solid transparent;
+        animation: none;
+    }
+
+    @keyframes typing {
+        from {
+            width: 0;
+        }
+        to {
+            width: 100%;
+        }
+    }
+
+    @keyframes blink-caret {
+        from, to {
+            border-color: transparent;
+        }
+        50% {
+            border-color: #667eea;
+        }
+    }
+
+
 }
