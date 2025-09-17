@@ -39,6 +39,10 @@ export default defineNuxtConfig({
         }
     },
 
+    // Static site generation
+    ssr: false,
+    target: 'static',
+
     // Tailwind CSS configuration
     tailwindcss: {
         cssPath: '~/assets/css/main.css'
@@ -47,7 +51,17 @@ export default defineNuxtConfig({
     // Image optimization
     image: {
         // Configure for static generation
-        provider: 'ipx'
+        provider: 'ipx',
+        format: ['webp', 'jpg', 'png'],
+        quality: 80,
+        screens: {
+            xs: 320,
+            sm: 640,
+            md: 768,
+            lg: 1024,
+            xl: 1280,
+            xxl: 1536
+        }
     },
 
     // SEO modules configuration

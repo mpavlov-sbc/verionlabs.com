@@ -3,8 +3,6 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 # Allow one concurrent deployment
 concurrency:
@@ -29,12 +27,14 @@ jobs:
         run: npm ci
         
       - name: Build with Nuxt
-        run: npm run build
+        run: npm run generate
+        env:
+          NITRO_PRESET: github-pages
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: ./dist
+          path: ./.output/public
 
   # Deployment job
   deploy:
