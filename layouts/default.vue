@@ -6,11 +6,10 @@
         <nav class="flex items-center justify-between h-16">
           <!-- Logo and Company Name -->
           <NuxtLink to="/" class="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-            <NuxtImg
+            <img
               src="/logo.svg"
               alt="VerionLabs Logo"
               class="h-8 w-8"
-              fallback="/logo-fallback.png"
             />
             <span class="text-xl font-bold text-gray-900">{{ siteContent.company.name }}</span>
           </NuxtLink>
@@ -118,12 +117,11 @@
             <!-- Company Info -->
             <div class="lg:col-span-2">
               <div class="flex items-center space-x-3 mb-4">
-                <NuxtImg
-                  src="/logo-white.svg"
-                  alt="VerionLabs Logo"
-                  class="h-8 w-8"
-                  fallback="/logo-fallback-white.png"
-                />
+                                  <img
+                    src="/logo-white.svg"
+                    alt="VerionLabs"
+                    class="h-8 w-8"
+                  />
                 <span class="text-xl font-bold">{{ siteContent.company.name }}</span>
               </div>
               <p class="text-gray-300 max-w-md mb-4">

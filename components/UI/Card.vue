@@ -1,11 +1,10 @@
 <template>
   <div :class="cardClasses">
     <div v-if="image" class="mb-4">
-      <NuxtImg
+      <img
         :src="image"
         :alt="imageAlt || title"
         :class="imageClasses"
-        format="webp"
         loading="lazy"
       />
     </div>

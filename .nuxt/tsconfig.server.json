@@ -107,29 +107,8 @@
       "#internal/nuxt/paths": [
         "../node_modules/nuxt/dist/core/runtime/nitro/utils/paths"
       ],
-      "#image": [
-        "../node_modules/@nuxt/image/dist/runtime"
-      ],
-      "#image/*": [
-        "../node_modules/@nuxt/image/dist/runtime/*"
-      ],
-      "#sitemap": [
-        "../node_modules/@nuxtjs/sitemap/dist/runtime/types"
-      ],
-      "#robots": [
-        "./robots"
-      ],
       "#unhead/composables": [
         "../node_modules/nuxt/dist/head/runtime/composables/v3"
-      ],
-      "#site-config": [
-        "../node_modules/nuxt-site-config/dist/runtime"
-      ],
-      "#site-config/*": [
-        "../node_modules/nuxt-site-config/dist/runtime/*"
-      ],
-      "#internal/nuxt-site-config": [
-        "../node_modules/nuxt-site-config/dist/runtime/nitro/composable-barrel-deprecated"
       ]
     },
     "lib": [
@@ -142,11 +121,7 @@
     "./types/nitro-nuxt.d.ts",
     "../node_modules/runtime/server",
     "../node_modules/dist/runtime/server",
-    "../node_modules/nuxt-site-config/dist/module.mjs/runtime/server",
-    "../node_modules/nuxt-site-config/dist/module.mjs/dist/runtime/server",
     "../shared/**/*.d.ts",
-    "./module/nuxt-site-config.d.ts",
-    "./module/@nuxtjs-sitemap.d.ts",
     "./types/nitro.d.ts",
     "../**/*",
     "../server/**/*"
@@ -155,11 +130,7 @@
     "../node_modules",
     "../node_modules/nuxt/node_modules",
     "../node_modules/@nuxtjs/tailwindcss/node_modules",
-    "../node_modules/@nuxt/image/node_modules",
-    "../node_modules/nuxt-site-config/node_modules",
-    "../node_modules/@nuxtjs/sitemap/node_modules",
-    "../node_modules/@nuxtjs/robots/node_modules",
-    "../node_modules/@vueuse/nuxt/node_modules",
+    "../node_modules/@nuxtjs/google-fonts/node_modules",
     "../node_modules/@nuxt/devtools/node_modules",
     "../node_modules/@nuxt/telemetry/node_modules",
     "../dist"
