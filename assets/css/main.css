@@ -9,7 +9,7 @@
     }
 
     body {
-        @apply font-sans text-gray-900 antialiased;
+        @apply font-sans text-neutral-800 antialiased;
     }
 
     h1,
@@ -41,15 +41,15 @@
 /* Custom component styles */
 @layer components {
     .btn-primary {
-        @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+        @apply bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
     }
 
     .btn-secondary {
-        @apply bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+        @apply bg-neutral-200 hover:bg-neutral-300 text-neutral-800 font-semibold py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2;
     }
 
     .btn-outline {
-        @apply border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+        @apply border-2 border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
     }
 
     .card {
@@ -69,7 +69,7 @@
         position: relative;
         display: inline-block;
         /* Clean, solid color by default */
-        color: #1e40af;
+        color: #1e293b;
         font-weight: 800;
         /* Crisp text rendering */
         -webkit-font-smoothing: antialiased;
@@ -85,20 +85,20 @@
 
     /* Enhanced effect on hover - using color transition instead of background-clip */
     .hero-title:hover {
-        /* Smooth color transition to a lighter, more elegant purple */
-        color: #6366f1;
+        /* Smooth color transition to a lighter, more elegant accent */
+        color: #334155;
         /* Use transform3d to avoid layout reflows */
         transform: scale3d(1.02, 1.02, 1) translateZ(0);
-        filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.15));
-        text-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
+        filter: drop-shadow(0 2px 8px rgba(51, 65, 85, 0.15));
+        text-shadow: 0 0 15px rgba(51, 65, 85, 0.1);
     }
 
     /* Special accent styling for "Modern Business" words */
     .accent-word {
         position: relative;
         display: inline-block;
-        color: #f59e0b;
-        /* Beautiful golden/amber color */
+        color: #0ea5e9;
+        /* Professional blue accent */
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         /* Prevent layout shifts */
         will-change: transform, color;
@@ -107,9 +107,9 @@
 
     /* Enhanced accent effect on title hover */
     .hero-title:hover .accent-word {
-        color: #d97706;
-        /* Deeper amber on hover */
-        text-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+        color: #0284c7;
+        /* Deeper accent on hover */
+        text-shadow: 0 0 20px rgba(14, 165, 233, 0.4);
         /* Use transform3d to avoid layout reflows */
         transform: translate3d(0, -1px, 0);
     }
@@ -175,7 +175,7 @@
 
     .particle {
         position: absolute;
-        background: linear-gradient(45deg, #667eea, #764ba2);
+        background: linear-gradient(45deg, #475569, #0ea5e9);
         border-radius: 50%;
         opacity: 0;
         animation: floatUp 6s linear infinite;
@@ -205,7 +205,7 @@
         position: fixed;
         width: 200px;
         height: 200px;
-        background: radial-gradient(circle, rgba(102, 126, 234, 0.15) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(71, 85, 105, 0.15) 0%, transparent 70%);
         border-radius: 50%;
         pointer-events: none;
         z-index: 9999;
@@ -226,15 +226,15 @@
 
     .text-shadow-glow {
         text-shadow:
-            0 0 20px rgba(102, 126, 234, 0.2),
-            0 0 40px rgba(102, 126, 234, 0.1);
+            0 0 20px rgba(71, 85, 105, 0.2),
+            0 0 40px rgba(71, 85, 105, 0.1);
         /* Better text rendering */
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
     }
 
     .typewriter {
-        border-right: 3px solid #667eea;
+        border-right: 3px solid #475569;
         animation: blink-caret 0.75s step-end infinite;
         /* Better text handling */
         display: inline-block;
@@ -247,7 +247,7 @@
 
     /* Only show cursor when actively typing */
     .typewriter.typing-active {
-        border-right: 3px solid #667eea;
+        border-right: 3px solid #475569;
         animation: blink-caret 0.75s step-end infinite;
     }
 
@@ -275,7 +275,7 @@
         }
 
         50% {
-            border-color: #667eea;
+            border-color: #475569;
         }
     }
 

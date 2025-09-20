@@ -197,7 +197,7 @@ export const siteContent: SiteContent = {
         {
             title: "E-Commerce Analytics Platform",
             description: "A comprehensive analytics dashboard for e-commerce businesses with real-time insights, predictive analytics, and automated reporting.",
-            image: "https://picsum.photos/600/400?random=10",
+            image: "/analytics_platform.png",
             tags: ["Vue.js", "Python", "PostgreSQL", "Machine Learning", "AWS"],
             liveDemo: "#",
             github: "#",
@@ -206,7 +206,7 @@ export const siteContent: SiteContent = {
         {
             title: "Cloud Migration Tool",
             description: "An automated tool for seamless cloud migration with minimal downtime and comprehensive data validation.",
-            image: "https://picsum.photos/600/400?random=11",
+            image: "/cloud_migration.png",
             tags: ["Node.js", "AWS", "Docker", "Kubernetes", "TypeScript"],
             liveDemo: "#",
             github: "#",
@@ -215,7 +215,7 @@ export const siteContent: SiteContent = {
         {
             title: "AI-Powered Chatbot",
             description: "An intelligent customer service chatbot with natural language processing and integration with existing CRM systems.",
-            image: "https://picsum.photos/600/400?random=12",
+            image: "/chat_bot.png",
             tags: ["Python", "TensorFlow", "React", "NLP", "Azure"],
             liveDemo: "#",
             github: "#",

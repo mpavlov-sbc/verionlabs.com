@@ -4,10 +4,10 @@
     <UISection background="blue" padding="lg">
       <UIContainer>
         <div class="text-center max-w-3xl mx-auto">
-          <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <h1 class="text-4xl md:text-5xl font-bold text-neutral-800 mb-6">
             About VerionLabs
           </h1>
-          <p class="text-xl text-gray-600">
+          <p class="text-xl text-neutral-600">
             Meet the team behind innovative software solutions that transform businesses and drive technological advancement.
           </p>
         </div>
@@ -18,14 +18,14 @@
     <UISection padding="lg" background="white">
       <UIContainer>
         <div class="max-w-4xl mx-auto">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-8 text-center">
+          <h2 class="text-3xl md:text-4xl font-bold text-neutral-800 mb-8 text-center">
             {{ siteContent.about.story.title }}
           </h2>
           <div class="space-y-6">
             <p
               v-for="paragraph in siteContent.about.story.content"
               :key="paragraph"
-              class="text-lg text-gray-600 leading-relaxed"
+              class="text-lg text-neutral-600 leading-relaxed"
             >
               {{ paragraph }}
             </p>
@@ -38,10 +38,10 @@
     <UISection padding="lg" background="gray">
       <UIContainer>
         <div class="max-w-4xl mx-auto text-center">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+          <h2 class="text-3xl md:text-4xl font-bold text-neutral-800 mb-6">
             {{ siteContent.about.vision.title }}
           </h2>
-          <p class="text-xl text-gray-600 leading-relaxed">
+          <p class="text-xl text-neutral-600 leading-relaxed">
             {{ siteContent.about.vision.content }}
           </p>
         </div>
@@ -52,10 +52,10 @@
     <UISection padding="lg" background="white">
       <UIContainer>
         <div class="text-center mb-16">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+          <h2 class="text-3xl md:text-4xl font-bold text-neutral-800 mb-6">
             Our Values
           </h2>
-          <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p class="text-lg text-neutral-600 max-w-2xl mx-auto">
             The principles that guide our work and define our commitment to excellence.
           </p>
         </div>
@@ -79,10 +79,10 @@
     <UISection padding="xl" background="gray">
       <UIContainer>
         <div class="text-center mb-16">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+          <h2 class="text-3xl md:text-4xl font-bold text-neutral-800 mb-6">
             Meet Our Team
           </h2>
-          <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p class="text-lg text-neutral-600 max-w-2xl mx-auto">
             Our diverse team of experts brings together decades of experience in cutting-edge technologies and innovative problem-solving.
           </p>
         </div>
@@ -94,23 +94,22 @@
             class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden"
           >
             <div class="aspect-square">
-              <NuxtImg
+              <img
                 :src="member.image"
                 :alt="`${member.name} - ${member.role}`"
                 class="w-full h-full object-cover"
-                format="webp"
                 loading="lazy"
               />
             </div>
             
             <div class="p-6">
-              <h3 class="text-xl font-bold text-gray-900 mb-1">
+              <h3 class="text-xl font-bold text-neutral-800 mb-1">
                 {{ member.name }}
               </h3>
-              <p class="text-blue-600 font-medium mb-3">
+              <p class="text-accent-600 font-medium mb-3">
                 {{ member.role }}
               </p>
-              <p class="text-gray-600 text-sm leading-relaxed mb-4">
+              <p class="text-neutral-600 text-sm leading-relaxed mb-4">
                 {{ member.bio }}
               </p>
               
@@ -120,7 +119,7 @@
                   :href="member.linkedin"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="text-gray-400 hover:text-blue-600 transition-colors duration-200"
+                  class="text-neutral-400 hover:text-accent-600 transition-colors duration-200"
                   aria-label="LinkedIn Profile"
                 >
                   <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -132,7 +131,7 @@
                   :href="member.github"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="text-gray-400 hover:text-gray-900 transition-colors duration-200"
+                  class="text-neutral-400 hover:text-neutral-800 transition-colors duration-200"
                   aria-label="GitHub Profile"
                 >
                   <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -155,10 +154,10 @@
             :key="stat.label"
             class="space-y-2"
           >
-            <div class="text-3xl md:text-4xl font-bold text-blue-600">
+            <div class="text-3xl md:text-4xl font-bold text-accent-600">
               {{ stat.value }}
             </div>
-            <div class="text-gray-600 font-medium">
+            <div class="text-neutral-600 font-medium">
               {{ stat.label }}
             </div>
           </div>
@@ -170,10 +169,10 @@
     <UISection padding="lg" background="blue">
       <UIContainer>
         <div class="text-center max-w-3xl mx-auto">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+          <h2 class="text-3xl md:text-4xl font-bold text-neutral-800 mb-6">
             Join Our Journey
           </h2>
-          <p class="text-lg text-gray-600 mb-8">
+          <p class="text-lg text-neutral-600 mb-8">
             Whether you're looking for innovative solutions for your business or want to be part of our growing team, we'd love to hear from you.
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">

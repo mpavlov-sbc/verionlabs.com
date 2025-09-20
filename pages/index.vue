@@ -37,7 +37,7 @@
             <div class="relative mb-8 min-h-16 md:min-h-20 flex items-center justify-center px-4">
               <p 
                 ref="subtitle"
-                class="typewriter text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto text-center leading-relaxed"
+                class="typewriter text-xl md:text-2xl text-neutral-600 max-w-4xl mx-auto text-center leading-relaxed"
                 :class="{ 'typing-active': isTypingActive }"
               >
                 {{ currentSubtitle }}
@@ -53,7 +53,7 @@
             size="lg"
             icon="arrow-right"
             icon-position="right"
-            class="magnetic-effect transform hover:scale-105 transition-all duration-300 shadow-2xl hover:shadow-blue-500/25"
+            class="magnetic-effect transform hover:scale-105 transition-all duration-300 shadow-2xl hover:shadow-primary-500/25"
             @mouseenter="createRippleEffect"
           >
             {{ siteContent.homepage.hero.cta }}
@@ -66,10 +66,10 @@
     <UISection padding="lg" background="white">
       <UIContainer>
         <div class="max-w-3xl mx-auto text-center">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+          <h2 class="text-3xl md:text-4xl font-bold text-neutral-800 mb-6">
             {{ siteContent.homepage.mission.title }}
           </h2>
-          <p class="text-lg text-gray-600 leading-relaxed">
+          <p class="text-lg text-neutral-600 leading-relaxed">
             {{ siteContent.homepage.mission.content }}
           </p>
         </div>
@@ -80,10 +80,10 @@
     <UISection padding="lg" background="gray">
       <UIContainer>
         <div class="text-center mb-16">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 class="text-3xl md:text-4xl font-bold text-neutral-800 mb-4">
             Our Expertise
           </h2>
-          <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p class="text-lg text-neutral-600 max-w-2xl mx-auto">
             Discover how our specialized services can transform your business with cutting-edge technology solutions.
           </p>
         </div>
@@ -117,10 +117,10 @@
     <UISection padding="lg" background="white">
       <UIContainer>
         <div class="text-center mb-16">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 class="text-3xl md:text-4xl font-bold text-neutral-800 mb-4">
             Featured Projects
           </h2>
-          <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p class="text-lg text-neutral-600 max-w-2xl mx-auto">
             Explore some of our latest work showcasing innovative solutions across various industries.
           </p>
         </div>
@@ -176,10 +176,10 @@
     <UISection padding="lg" background="blue">
       <UIContainer>
         <div class="text-center max-w-3xl mx-auto">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+          <h2 class="text-3xl md:text-4xl font-bold text-neutral-800 mb-6">
             {{ siteContent.homepage.contactCta.title }}
           </h2>
-          <p class="text-lg text-gray-600 mb-8">
+          <p class="text-lg text-neutral-600 mb-8">
             {{ siteContent.homepage.contactCta.description }}
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">

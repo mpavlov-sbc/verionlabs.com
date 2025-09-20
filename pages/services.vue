@@ -4,10 +4,10 @@
     <UISection background="blue" padding="lg">
       <UIContainer>
         <div class="text-center max-w-3xl mx-auto">
-          <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <h1 class="text-4xl md:text-5xl font-bold text-neutral-800 mb-6">
             Our Services
           </h1>
-          <p class="text-xl text-gray-600">
+          <p class="text-xl text-neutral-600">
             Comprehensive technology solutions designed to drive your business forward with innovation, efficiency, and expertise.
           </p>
         </div>
@@ -27,31 +27,31 @@
             <!-- Service Content -->
             <div :class="{ 'lg:col-start-2': index % 2 === 1 }">
               <div class="flex items-center mb-6">
-                <div class="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-lg mr-4">
+                <div class="flex items-center justify-center w-16 h-16 bg-accent-100 rounded-lg mr-4">
                   <UIIcon
                     :name="service.icon"
                     size="lg"
-                    class="text-blue-600"
+                    class="text-accent-600"
                   />
                 </div>
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900">
+                <h2 class="text-3xl md:text-4xl font-bold text-neutral-800">
                   {{ service.title }}
                 </h2>
               </div>
               
-              <p class="text-lg text-gray-600 mb-6 leading-relaxed">
+              <p class="text-lg text-neutral-600 mb-6 leading-relaxed">
                 {{ service.detailedDescription }}
               </p>
               
               <div class="mb-8">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <h3 class="text-lg font-semibold text-neutral-800 mb-4">
                   Technologies & Tools
                 </h3>
                 <div class="flex flex-wrap gap-2">
                   <span
                     v-for="tech in service.technologies"
                     :key="tech"
-                    class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium"
+                    class="px-3 py-1 bg-neutral-100 text-neutral-700 rounded-full text-sm font-medium"
                   >
                     {{ tech }}
                   </span>
@@ -71,11 +71,10 @@
             <!-- Service Image/Illustration -->
             <div :class="{ 'lg:col-start-1 lg:row-start-1': index % 2 === 1 }">
               <div class="relative">
-                <NuxtImg
+                <img
                   :src="`https://picsum.photos/600/400?random=${index + 20}`"
                   :alt="`${service.title} illustration`"
                   class="w-full h-80 object-cover rounded-lg shadow-lg"
-                  format="webp"
                   loading="lazy"
                 />
                 <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-lg"></div>
@@ -104,7 +103,7 @@
             :key="step.title"
             class="text-center"
           >
-            <div class="flex items-center justify-center w-16 h-16 bg-blue-600 text-white rounded-full mx-auto mb-4 text-xl font-bold">
+            <div class="flex items-center justify-center w-16 h-16 bg-primary-600 text-white rounded-full mx-auto mb-4 text-xl font-bold">
               {{ index + 1 }}
             </div>
             <h3 class="text-xl font-semibold text-gray-900 mb-3">

@@ -28,8 +28,8 @@ const sectionClasses = computed(() => {
   const backgrounds = {
     transparent: '',
     white: 'bg-white',
-    gray: 'bg-gray-50',
-    blue: 'bg-blue-50'
+    gray: 'bg-neutral-50',
+    blue: 'bg-primary-50'
   }
   
   return [paddings[props.padding], backgrounds[props.background]].filter(Boolean).join(' ')
