@@ -26,7 +26,7 @@
         <span
           v-for="tag in tags"
           :key="tag"
-          class="px-2 py-1 text-xs font-medium bg-accent-100 text-accent-800 rounded"
+          class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded"
         >
           {{ tag }}
         </span>
@@ -67,7 +67,7 @@ const cardClasses = computed(() => {
   
   const variants = {
     default: 'shadow-md',
-    bordered: 'border border-neutral-200',
+    bordered: 'border border-gray-200',
     elevated: 'shadow-lg'
   }
   
@@ -87,14 +87,14 @@ const imageClasses = computed(() => {
 })
 
 const iconClasses = computed(() => {
-  return 'w-12 h-12 text-primary-600'
+  return 'w-12 h-12 text-slate-600'
 })
 
 const titleClasses = computed(() => {
-  return 'text-xl font-bold text-neutral-800 mb-2'
+  return 'text-xl font-bold text-gray-800 mb-2'
 })
 
 const descriptionClasses = computed(() => {
-  return 'text-neutral-600 leading-relaxed'
+  return 'text-gray-600 leading-relaxed'
 })
 </script>
