@@ -1,0 +1,409 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ site_config.company_name }} - Innovative Software Solutions{% endblock %}
+
+{% block extra_head %}
+<style>
+/* Page-specific animations and styling */
+.animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Hero Section with Enhanced Styling -->
+    <section class="relative py-20 lg:py-32 bg-gradient-to-br from-slate-50 to-sky-50 overflow-hidden">
+        <!-- Floating Particles Background -->
+        <div class="floating-particles absolute inset-0" id="particlesContainer"></div>
+        
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="text-center max-w-4xl mx-auto">
+                <!-- Main Hero Title with Advanced Animations -->
+                <h1 
+                    id="heroTitle"
+                    class="hero-title magnetic-effect text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
+                >
+                    <span class="word-reveal" style="animation-delay: 0s;">Innovative</span>
+                    <span class="mr-4"></span>
+                    <span class="word-reveal accent-word" style="animation-delay: 0.1s;">Software</span>
+                    <span class="mr-4"></span>
+                    <span class="word-reveal" style="animation-delay: 0.2s;">Solutions</span>
+                    <span class="mr-4"></span>
+                    <span class="word-reveal" style="animation-delay: 0.3s;">for</span>
+                    <span class="mr-4"></span>
+                    <span class="word-reveal accent-word" style="animation-delay: 0.4s;">Modern</span>
+                    <span class="mr-4"></span>
+                    <span class="word-reveal accent-word" style="animation-delay: 0.5s;">Business</span>
+                </h1>
+                
+                <!-- Typewriter Subtitle -->
+                <div class="relative mb-8 min-h-16 md:min-h-20 flex items-center justify-center px-4">
+                    <p 
+                        id="subtitle"
+                        class="typewriter text-xl md:text-2xl text-slate-600 max-w-4xl mx-auto text-center leading-relaxed"
+                    ></p>
+                </div>
+                
+                <!-- CTA Button with Enhanced Effects -->
+                <a
+                    href="{% url 'website:services' %}"
+                    class="magnetic-effect btn-primary btn-lg transform hover:scale-105 transition-all duration-300 shadow-2xl hover:shadow-slate-500/25 inline-block"
+                    onmouseenter="createRippleEffect(event)"
+                >
+                    Explore Our Services
+                    <svg class="w-5 h-5 ml-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mission/Value Proposition Section -->
+    <section class="py-16 lg:py-20 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="max-w-3xl mx-auto text-center fade-in-up">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-6">
+                    Our Mission
+                </h2>
+                <p class="text-lg text-slate-600 leading-relaxed">
+                    At VerionLabs, we believe technology should be a catalyst for business success. We partner with companies from startups to enterprises, delivering custom software solutions that solve real-world challenges and unlock new opportunities for growth.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Overview Section -->
+    <section class="py-16 lg:py-20 bg-neutral-50">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16 fade-in-up">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
+                    Our Expertise
+                </h2>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+                    Discover how our specialized services can transform your business with cutting-edge technology solutions.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {% for service in services %}
+                <div class="service-card bg-white rounded-lg shadow-lg p-8 text-center hover:shadow-xl">
+                    <div class="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        {% if service.icon == 'cloud' %}
+                            <svg class="w-8 h-8 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                        {% elif service.icon == 'brain' %}
+                            <svg class="w-8 h-8 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                        {% elif service.icon == 'code' %}
+                            <svg class="w-8 h-8 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                            </svg>
+                        {% else %}
+                            <svg class="w-8 h-8 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        {% endif %}
+                    </div>
+                    
+                    <h3 class="text-xl font-bold text-slate-800 mb-4">{{ service.title }}</h3>
+                    <p class="text-slate-600 mb-6 leading-relaxed">{{ service.description }}</p>
+                    
+                    <a href="{% url 'website:services' %}" 
+                       class="btn-outline btn-sm magnetic-effect">
+                        Learn More
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Demos Section -->
+    <section class="py-16 lg:py-20 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16 fade-in-up">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
+                    Featured Projects
+                </h2>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+                    Explore some of our latest work showcasing innovative solutions across various industries.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                {% for demo in featured_demos %}
+                <div class="demo-card bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl">
+                    {% if demo.get_image_url %}
+                    <div class="h-48 overflow-hidden">
+                        <img src="{{ demo.get_image_url }}" 
+                             alt="{{ demo.title }}" 
+                             class="w-full h-full object-cover">
+                    </div>
+                    {% endif %}
+                    
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-slate-800 mb-3">{{ demo.title }}</h3>
+                        <p class="text-slate-600 mb-4">{{ demo.description }}</p>
+                        
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            {% for tag in demo.tags.all %}
+                            <span class="px-3 py-1 bg-sky-100 text-sky-800 text-sm rounded-full">
+                                {{ tag.name }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            {% if demo.live_demo_url %}
+                            <a href="{{ demo.live_demo_url }}" 
+                               target="_blank"
+                               class="flex-1 btn-outline btn-sm">
+                                Live Demo
+                                <svg class="ml-1 w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                </svg>
+                            </a>
+                            {% endif %}
+                            
+                            {% if demo.github_url %}
+                            <a href="{{ demo.github_url }}" 
+                               target="_blank"
+                               class="flex-1 text-slate-600 border-2 border-slate-300 rounded-lg hover:bg-slate-50 transition-colors duration-300 px-4 py-2 text-center text-sm">
+                                <svg class="mr-1 w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                                </svg>
+                                Code
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="text-center">
+                <a href="{% url 'website:demos' %}" class="btn-outline btn-lg">
+                    View All Projects
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact CTA Section -->
+    <section class="py-16 lg:py-20 bg-gradient-to-br from-slate-50 to-sky-50">
+        <div class="container mx-auto px-6">
+            <div class="text-center max-w-3xl mx-auto fade-in-up">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-6">
+                    Ready to Transform Your Business?
+                </h2>
+                <p class="text-lg text-slate-600 mb-8">
+                    Let's discuss how our innovative solutions can help you achieve your goals and stay ahead of the competition.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a
+                        href="{% url 'website:contact' %}"
+                        class="btn-primary btn-lg magnetic-effect"
+                    >
+                        Get Started Today
+                    </a>
+                    <a
+                        href="mailto:contact@verionlabs.com"
+                        class="btn-outline btn-lg magnetic-effect"
+                    >
+                        <svg class="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                        Send Email
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Original Nuxt.js functionality adapted for Django
+    let isTypingActive = false;
+    let currentSubtitle = '';
+    const subtitleTexts = [
+        'Your vision, our expertise, endless possibilities',
+        'Transform ideas into powerful digital experiences.',
+        'Drive business growth with modern technology.',
+        'Unlock new opportunities for innovation.'
+    ];
+    let subtitleIndex = 0;
+
+    // Typewriter effect for subtitle
+    function typewriterEffect() {
+        const text = subtitleTexts[subtitleIndex];
+        let charIndex = 0;
+        const subtitleElement = document.getElementById('subtitle');
+        
+        if (!subtitleElement) return;
+        
+        currentSubtitle = '';
+        subtitleElement.textContent = '';
+        isTypingActive = true;
+        subtitleElement.classList.add('typing-active');
+        
+        const typeInterval = setInterval(() => {
+            if (charIndex < text.length) {
+                currentSubtitle += text.charAt(charIndex);
+                subtitleElement.textContent = currentSubtitle;
+                charIndex++;
+            } else {
+                clearInterval(typeInterval);
+                isTypingActive = false;
+                subtitleElement.classList.remove('typing-active');
+                setTimeout(() => {
+                    // Wait 2.5 seconds then start erasing
+                    const eraseInterval = setInterval(() => {
+                        if (currentSubtitle.length > 0) {
+                            currentSubtitle = currentSubtitle.slice(0, -1);
+                            subtitleElement.textContent = currentSubtitle;
+                        } else {
+                            clearInterval(eraseInterval);
+                            subtitleIndex = (subtitleIndex + 1) % subtitleTexts.length;
+                            setTimeout(typewriterEffect, 500);
+                        }
+                    }, 25); // Slightly faster erasing
+                }, 2500); // Shorter display time
+            }
+        }, 40); // Slightly faster typing
+    }
+
+    // Particle system
+    function createParticle() {
+        const particlesContainer = document.getElementById('particlesContainer');
+        if (!particlesContainer) return;
+        
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        
+        const size = Math.random() * 6 + 2;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.animationDuration = `${Math.random() * 3 + 4}s`;
+        particle.style.animationDelay = `${Math.random() * 2}s`;
+        
+        particlesContainer.appendChild(particle);
+        
+        // Remove particle after animation
+        setTimeout(() => {
+            if (particle.parentNode) {
+                particle.parentNode.removeChild(particle);
+            }
+        }, 7000);
+    }
+
+    // Ripple effect for button
+    window.createRippleEffect = function(event) {
+        const button = event.currentTarget;
+        const ripple = document.createElement('span');
+        const rect = button.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        
+        ripple.style.width = ripple.style.height = `${size}px`;
+        ripple.style.left = `${event.clientX - rect.left - size / 2}px`;
+        ripple.style.top = `${event.clientY - rect.top - size / 2}px`;
+        ripple.classList.add('ripple');
+        
+        // Add ripple styles
+        ripple.style.position = 'absolute';
+        ripple.style.borderRadius = '50%';
+        ripple.style.background = 'rgba(255, 255, 255, 0.6)';
+        ripple.style.transform = 'scale(0)';
+        ripple.style.animation = 'ripple 0.6s linear';
+        ripple.style.pointerEvents = 'none';
+        
+        button.style.position = 'relative';
+        button.style.overflow = 'hidden';
+        button.appendChild(ripple);
+        
+        setTimeout(() => {
+            ripple.remove();
+        }, 600);
+    }
+
+    // Scroll animations
+    function animateOnScroll() {
+        const elements = document.querySelectorAll('.fade-in-up, .service-card, .demo-card');
+        
+        elements.forEach(element => {
+            const elementTop = element.getBoundingClientRect().top;
+            const elementVisible = 150;
+            
+            if (elementTop < window.innerHeight - elementVisible) {
+                element.classList.add('animate-fade-in-up');
+            }
+        });
+    }
+
+    // Enhanced hover effects for cards
+    const cards = document.querySelectorAll('.service-card, .demo-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.02)';
+            this.style.boxShadow = '0 25px 50px rgba(51, 65, 85, 0.15)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+            this.style.boxShadow = '0 4px 6px rgba(51, 65, 85, 0.1)';
+        });
+    });
+
+    // Start typewriter effect
+    setTimeout(() => {
+        typewriterEffect();
+    }, 1000);
+    
+    // Start particle system
+    const particleInterval = setInterval(() => {
+        createParticle();
+    }, 300);
+
+    // Initialize scroll animations
+    animateOnScroll();
+    window.addEventListener('scroll', animateOnScroll);
+
+    // Intersection Observer for better performance
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-fade-in-up');
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+
+    // Observe elements for scroll animations
+    document.querySelectorAll('.fade-in-up, .service-card, .demo-card').forEach(el => {
+        observer.observe(el);
+    });
+    
+});
+</script>
+{% endblock %}

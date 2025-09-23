@@ -1,0 +1,17 @@
+{
+    "name": "VerionLabs",
+    "short_name": "VerionLabs",
+    "description": "Innovative software solutions for modern business",
+    "theme_color": "#2563eb",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "scope": "/",
+    "start_url": "/",
+    "icons": [
+        {
+            "src": "/static/images/favicon.ico",
+            "sizes": "16x16 32x32",
+            "type": "image/x-icon"
+        }
+    ]
+}
