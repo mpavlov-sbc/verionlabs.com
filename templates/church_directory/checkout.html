@@ -5,16 +5,8 @@
 
 {% block extra_css %}
 <style>
-    .checkout-step {
-        @apply flex items-center space-x-4 mb-8;
-    }
-
-    .step-number {
-        @apply w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-semibold flex items-center justify-center flex-shrink-0;
-    }
-
-    .step-content {
-        @apply flex-1;
+    .checkout-section {
+        margin-bottom: 2rem;
     }
 
     .coupon-input {
@@ -22,11 +14,13 @@
     }
 
     .coupon-success {
-        @apply border-green-500 bg-green-50;
+        border-color: #10b981;
+        background-color: #f0fdf4;
     }
 
     .coupon-error {
-        @apply border-red-500 bg-red-50;
+        border-color: #ef4444;
+        background-color: #fef2f2;
     }
 </style>
 {% endblock %}
@@ -55,135 +49,123 @@
                 <form method="post" id="checkout-form">
                     {% csrf_token %}
 
-                    <!-- Step 1: Plan Selection -->
-                    <div class="checkout-step">
-                        <div class="step-number">1</div>
-                        <div class="step-content">
-                            <h2 class="text-xl font-semibold text-gray-900 mb-2">Selected Plan</h2>
-                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <h3 class="text-lg font-semibold text-blue-900">{{ tier.name }} Plan</h3>
-                                        <p class="text-blue-700 text-sm mt-1">{{ tier.description }}</p>
-                                        <p class="text-blue-800 font-medium mt-2">{{ tier.users_display }} users</p>
+                    <!-- Plan Selection -->
+                    <div class="checkout-section">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-2">Selected Plan</h2>
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-blue-900">{{ tier.name }} Plan</h3>
+                                    <p class="text-blue-700 text-sm mt-1">{{ tier.description }}</p>
+                                    <p class="text-blue-800 font-medium mt-2">{{ tier.users_display }} users</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold text-blue-900">
+                                        $<span id="display-price">{{ base_price|floatformat:0 }}</span>
                                     </div>
-                                    <div class="text-right">
-                                        <div class="text-2xl font-bold text-blue-900">
-                                            $<span id="display-price">{{ base_price|floatformat:0 }}</span>
-                                        </div>
-                                        <div class="text-sm text-blue-700">
-                                            /{% if billing_period == 'annual' %}year{% else %}month{% endif %}
-                                        </div>
+                                    <div class="text-sm text-blue-700">
+                                        /{% if billing_period == 'annual' %}year{% else %}month{% endif %}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Step 2: Coupon Code -->
-                    <div class="checkout-step">
-                        <div class="step-number">2</div>
-                        <div class="step-content">
-                            <h2 class="text-xl font-semibold text-gray-900 mb-4">Coupon Code (Optional)</h2>
-                            <div class="flex space-x-4">
-                                <div class="flex-1">
-                                    <input type="text" id="coupon-code" name="coupon_code"
-                                        value="{{ coupon_code|default:'' }}" placeholder="Enter coupon code"
-                                        class="coupon-input form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
-                                        style="text-transform: uppercase;">
-                                    <div id="coupon-message" class="mt-2 text-sm hidden"></div>
-                                </div>
-                                <button type="button" id="apply-coupon" class="btn-secondary whitespace-nowrap">
-                                    Apply
-                                </button>
+                    <!-- Coupon Code -->
+                    <div class="checkout-section">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Coupon Code (Optional)</h2>
+                        <div class="flex space-x-4">
+                            <div class="flex-1">
+                                <input type="text" id="coupon-code" name="coupon_code"
+                                    value="{{ coupon_code|default:'' }}" placeholder="Enter coupon code"
+                                    class="coupon-input form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
+                                    style="text-transform: uppercase;">
+                                <div id="coupon-message" class="mt-2 text-sm hidden"></div>
                             </div>
-                            {% if coupon %}
-                            <div class="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
-                                <div class="flex items-center">
-                                    <svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd"
-                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                            clip-rule="evenodd"></path>
-                                    </svg>
-                                    <div>
-                                        <p class="text-green-800 font-medium">Coupon Applied: {{ coupon.code }}</p>
-                                        <p class="text-green-700 text-sm">{{ coupon.description }}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endif %}
+                            <button type="button" id="apply-coupon" class="btn-secondary whitespace-nowrap">
+                                Apply
+                            </button>
                         </div>
-                    </div>
-
-                    <!-- Step 3: Church Information -->
-                    <div class="checkout-step">
-                        <div class="step-number">3</div>
-                        <div class="step-content">
-                            <h2 class="text-xl font-semibold text-gray-900 mb-4">Church Information</h2>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {% if coupon %}
+                        <div class="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                        clip-rule="evenodd"></path>
+                                </svg>
                                 <div>
-                                    <label for="{{ form.email.id_for_label }}"
-                                        class="block text-sm font-medium text-gray-700 mb-2">
-                                        {{ form.email.label }}
-                                    </label>
-                                    {{ form.email }}
-                                    {% if form.email.errors %}
-                                    <div class="text-red-600 text-sm mt-1">{{ form.email.errors|first }}</div>
-                                    {% endif %}
-                                </div>
-
-                                <div>
-                                    <label for="{{ form.church_name.id_for_label }}"
-                                        class="block text-sm font-medium text-gray-700 mb-2">
-                                        {{ form.church_name.label }}
-                                    </label>
-                                    {{ form.church_name }}
-                                    {% if form.church_name.errors %}
-                                    <div class="text-red-600 text-sm mt-1">{{ form.church_name.errors|first }}</div>
-                                    {% endif %}
-                                </div>
-
-                                <div>
-                                    <label for="{{ form.contact_name.id_for_label }}"
-                                        class="block text-sm font-medium text-gray-700 mb-2">
-                                        {{ form.contact_name.label }}
-                                    </label>
-                                    {{ form.contact_name }}
-                                    {% if form.contact_name.errors %}
-                                    <div class="text-red-600 text-sm mt-1">{{ form.contact_name.errors|first }}</div>
-                                    {% endif %}
-                                </div>
-
-                                <div>
-                                    <label for="{{ form.phone.id_for_label }}"
-                                        class="block text-sm font-medium text-gray-700 mb-2">
-                                        {{ form.phone.label }}
-                                    </label>
-                                    {{ form.phone }}
-                                    {% if form.phone.errors %}
-                                    <div class="text-red-600 text-sm mt-1">{{ form.phone.errors|first }}</div>
-                                    {% endif %}
+                                    <p class="text-green-800 font-medium">Coupon Applied: {{ coupon.code }}</p>
+                                    <p class="text-green-700 text-sm">{{ coupon.description }}</p>
                                 </div>
                             </div>
                         </div>
+                        {% endif %}
                     </div>
 
-                    <!-- Step 4: Terms and Conditions -->
-                    <div class="checkout-step">
-                        <div class="step-number">4</div>
-                        <div class="step-content">
-                            <h2 class="text-xl font-semibold text-gray-900 mb-4">Terms & Conditions</h2>
-                            <div class="flex items-start space-x-3">
-                                {{ form.agree_terms }}
-                                <label for="{{ form.agree_terms.id_for_label }}"
-                                    class="text-sm text-gray-700 leading-5">
-                                    {{ form.agree_terms.label }}
+                    <!-- Church Information -->
+                    <div class="checkout-section">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Church Information</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="{{ form.email.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.email.label }}
                                 </label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.email.errors|first }}</div>
+                                {% endif %}
                             </div>
-                            {% if form.agree_terms.errors %}
-                            <div class="text-red-600 text-sm mt-1 ml-7">{{ form.agree_terms.errors|first }}</div>
-                            {% endif %}
+
+                            <div>
+                                <label for="{{ form.church_name.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.church_name.label }}
+                                </label>
+                                {{ form.church_name }}
+                                {% if form.church_name.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.church_name.errors|first }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <label for="{{ form.contact_name.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.contact_name.label }}
+                                </label>
+                                {{ form.contact_name }}
+                                {% if form.contact_name.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.contact_name.errors|first }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <label for="{{ form.phone.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.phone.label }}
+                                </label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.phone.errors|first }}</div>
+                                {% endif %}
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- Terms and Conditions -->
+                    <div class="checkout-section">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Terms & Conditions</h2>
+                        <div class="flex items-start space-x-3">
+                            {{ form.agree_terms }}
+                            <label for="{{ form.agree_terms.id_for_label }}"
+                                class="text-sm text-gray-700 leading-5">
+                                {{ form.agree_terms.label }}
+                            </label>
+                        </div>
+                        {% if form.agree_terms.errors %}
+                        <div class="text-red-600 text-sm mt-1 ml-7">{{ form.agree_terms.errors|first }}</div>
+                        {% endif %}
                     </div>
 
                     <!-- Submit Button -->
