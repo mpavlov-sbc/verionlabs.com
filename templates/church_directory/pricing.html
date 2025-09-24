@@ -75,8 +75,7 @@
                     <!-- Monthly Pricing -->
                     <div class="pricing-monthly">
                         <div class="flex items-baseline mb-2">
-                            <span class="text-4xl font-bold text-gray-900">${{ tier.monthly_price|floatformat:0
-                                }}</span>
+                            <span class="text-4xl font-bold text-gray-900">${{ tier.monthly_price|floatformat:0 }}</span>
                             <span class="text-gray-600 ml-2">/month</span>
                         </div>
                         <p class="text-sm text-gray-600 mb-6">{{ tier.users_display }} users</p>
@@ -90,8 +89,7 @@
                             <span class="text-gray-600 ml-2">/year</span>
                         </div>
                         <div class="flex items-center mb-2">
-                            <span class="text-sm text-gray-500 line-through mr-2">${{ tier.monthly_price|floatformat:0
-                                }} × 12</span>
+                            <span class="text-sm text-gray-500 line-through mr-2">${{ tier.monthly_price|floatformat:0 }} × 12</span>
                             {% if tier.annual_discount_percent %}
                             <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Save {{
                                 tier.annual_discount_percent }}%</span>
@@ -100,8 +98,7 @@
                         <p class="text-sm text-gray-600 mb-6">{{ tier.users_display }} users</p>
                         {% else %}
                         <div class="flex items-baseline mb-2">
-                            <span class="text-4xl font-bold text-gray-900">${{ tier.monthly_price|floatformat:0
-                                }}</span>
+                            <span class="text-4xl font-bold text-gray-900">${{ tier.monthly_price|floatformat:0 }}</span>
                             <span class="text-gray-600 ml-2">/month</span>
                         </div>
                         <p class="text-sm text-gray-600 mb-6">{{ tier.users_display }} users</p>
