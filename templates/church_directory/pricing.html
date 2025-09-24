@@ -12,6 +12,7 @@
         display: flex;
         position: relative;
     }
+
     .billing-option {
         padding: 8px 16px;
         border-radius: 9999px;
@@ -20,6 +21,7 @@
         position: relative;
         z-index: 2;
     }
+
     .billing-option.active {
         background: white;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -37,7 +39,7 @@
         <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-12">
             Choose the plan that fits your congregation size. All plans include our core features with no hidden fees.
         </p>
-        
+
         <!-- Billing Toggle -->
         <div class="flex justify-center mb-12">
             <div class="billing-toggle">
@@ -58,26 +60,28 @@
     <div class="container-width">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {% for tier in tiers %}
-            <div class="bg-white rounded-2xl shadow-xl border-2 {% if tier.is_popular %}border-blue-500 transform scale-105{% else %}border-gray-200{% endif %} relative overflow-hidden">
+            <div
+                class="bg-white rounded-2xl shadow-xl border-2 {% if tier.is_popular %}border-blue-500 transform scale-105{% else %}border-gray-200{% endif %} relative overflow-hidden">
                 {% if tier.is_popular %}
                 <div class="bg-blue-500 text-white text-center py-2 text-sm font-semibold">
                     MOST POPULAR
                 </div>
                 {% endif %}
-                
+
                 <div class="p-8">
                     <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ tier.name }}</h3>
                     <p class="text-gray-600 mb-6 h-16">{{ tier.description }}</p>
-                    
+
                     <!-- Monthly Pricing -->
                     <div class="pricing-monthly">
                         <div class="flex items-baseline mb-2">
-                            <span class="text-4xl font-bold text-gray-900">${{ tier.monthly_price|floatformat:0 }}</span>
+                            <span class="text-4xl font-bold text-gray-900">${{ tier.monthly_price|floatformat:0
+                                }}</span>
                             <span class="text-gray-600 ml-2">/month</span>
                         </div>
                         <p class="text-sm text-gray-600 mb-6">{{ tier.users_display }} users</p>
                     </div>
-                    
+
                     <!-- Annual Pricing -->
                     <div class="pricing-annual hidden">
                         {% if tier.annual_price %}
@@ -86,42 +90,50 @@
                             <span class="text-gray-600 ml-2">/year</span>
                         </div>
                         <div class="flex items-center mb-2">
-                            <span class="text-sm text-gray-500 line-through mr-2">${{ tier.monthly_price|floatformat:0 }} × 12</span>
+                            <span class="text-sm text-gray-500 line-through mr-2">${{ tier.monthly_price|floatformat:0
+                                }} × 12</span>
                             {% if tier.annual_discount_percent %}
-                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Save {{ tier.annual_discount_percent }}%</span>
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Save {{
+                                tier.annual_discount_percent }}%</span>
                             {% endif %}
                         </div>
                         <p class="text-sm text-gray-600 mb-6">{{ tier.users_display }} users</p>
                         {% else %}
                         <div class="flex items-baseline mb-2">
-                            <span class="text-4xl font-bold text-gray-900">${{ tier.monthly_price|floatformat:0 }}</span>
+                            <span class="text-4xl font-bold text-gray-900">${{ tier.monthly_price|floatformat:0
+                                }}</span>
                             <span class="text-gray-600 ml-2">/month</span>
                         </div>
                         <p class="text-sm text-gray-600 mb-6">{{ tier.users_display }} users</p>
                         {% endif %}
                     </div>
-                    
+
                     <ul class="space-y-3 mb-8">
                         {% for feature in tier.features %}
                         <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="currentColor"
+                                viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clip-rule="evenodd"></path>
                             </svg>
                             <span class="text-gray-700 text-sm">{{ feature }}</span>
                         </li>
                         {% endfor %}
                     </ul>
-                    
+
                     <!-- Monthly CTA -->
                     <div class="cta-monthly">
-                        <a href="{% url 'church_directory:checkout' tier.id %}?billing=monthly" class="block w-full text-center {% if tier.is_popular %}btn-primary{% else %}btn-outline{% endif %}">
+                        <a href="{% url 'church_directory:checkout' tier.id %}?billing=monthly"
+                            class="block w-full text-center {% if tier.is_popular %}btn-primary{% else %}btn-outline{% endif %}">
                             Get Started Monthly
                         </a>
                     </div>
-                    
+
                     <!-- Annual CTA -->
                     <div class="cta-annual hidden">
-                        <a href="{% url 'church_directory:checkout' tier.id %}?billing=annual" class="block w-full text-center {% if tier.is_popular %}btn-primary{% else %}btn-outline{% endif %}">
+                        <a href="{% url 'church_directory:checkout' tier.id %}?billing=annual"
+                            class="block w-full text-center {% if tier.is_popular %}btn-primary{% else %}btn-outline{% endif %}">
                             Get Started Annual
                         </a>
                     </div>
@@ -129,14 +141,15 @@
             </div>
             {% endfor %}
         </div>
-        
+
         <!-- Additional Info -->
         <div class="mt-16 text-center">
             <p class="text-gray-600 mb-4">
                 All plans include a 14-day free trial. No credit card required to start.
             </p>
             <p class="text-gray-600">
-                Need a custom solution? <a href="{% url 'church_directory:contact' %}" class="text-blue-600 hover:text-blue-800">Contact us</a> for enterprise pricing.
+                Need a custom solution? <a href="{% url 'church_directory:contact' %}"
+                    class="text-blue-600 hover:text-blue-800">Contact us</a> for enterprise pricing.
             </p>
         </div>
     </div>
@@ -153,7 +166,7 @@
                 All plans include our core features designed specifically for churches.
             </p>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div class="bg-white rounded-xl p-6 shadow-lg">
                 <div class="flex items-center mb-4">
@@ -162,29 +175,35 @@
                     </svg>
                     <h3 class="text-lg font-semibold text-gray-900">Secure & Private</h3>
                 </div>
-                <p class="text-gray-600 text-sm">End-to-end encryption, role-based access controls, and GDPR compliance to protect your member data.</p>
+                <p class="text-gray-600 text-sm">End-to-end encryption, role-based access controls, and GDPR compliance
+                    to protect your member data.</p>
             </div>
-            
+
             <div class="bg-white rounded-xl p-6 shadow-lg">
                 <div class="flex items-center mb-4">
                     <svg class="w-8 h-8 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 2L3 7v11a1 1 0 001 1h3v-8a1 1 0 011-1h4a1 1 0 011 1v8h3a1 1 0 001-1V7l-7-5z"></path>
+                        <path d="M10 2L3 7v11a1 1 0 001 1h3v-8a1 1 0 011-1h4a1 1 0 011 1v8h3a1 1 0 001-1V7l-7-5z">
+                        </path>
                     </svg>
                     <h3 class="text-lg font-semibold text-gray-900">Mobile Apps</h3>
                 </div>
-                <p class="text-gray-600 text-sm">Native iOS and Android apps with offline access, push notifications, and seamless synchronization.</p>
+                <p class="text-gray-600 text-sm">Native iOS and Android apps with offline access, push notifications,
+                    and seamless synchronization.</p>
             </div>
-            
+
             <div class="bg-white rounded-xl p-6 shadow-lg">
                 <div class="flex items-center mb-4">
                     <svg class="w-8 h-8 text-purple-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+                        <path
+                            d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z">
+                        </path>
                     </svg>
                     <h3 class="text-lg font-semibold text-gray-900">Easy Management</h3>
                 </div>
-                <p class="text-gray-600 text-sm">Intuitive admin dashboard with bulk operations, CSV imports, and automated member updates.</p>
+                <p class="text-gray-600 text-sm">Intuitive admin dashboard with bulk operations, CSV imports, and
+                    automated member updates.</p>
             </div>
-            
+
             <div class="bg-white rounded-xl p-6 shadow-lg">
                 <div class="flex items-center mb-4">
                     <svg class="w-8 h-8 text-orange-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
@@ -193,27 +212,34 @@
                     </svg>
                     <h3 class="text-lg font-semibold text-gray-900">Communication</h3>
                 </div>
-                <p class="text-gray-600 text-sm">Send announcements, prayer requests, and group notifications directly through the app.</p>
+                <p class="text-gray-600 text-sm">Send announcements, prayer requests, and group notifications directly
+                    through the app.</p>
             </div>
-            
+
             <div class="bg-white rounded-xl p-6 shadow-lg">
                 <div class="flex items-center mb-4">
                     <svg class="w-8 h-8 text-red-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"></path>
+                        <path
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z">
+                        </path>
                     </svg>
                     <h3 class="text-lg font-semibold text-gray-900">24/7 Support</h3>
                 </div>
-                <p class="text-gray-600 text-sm">Comprehensive help center, video tutorials, and responsive customer support team.</p>
+                <p class="text-gray-600 text-sm">Comprehensive help center, video tutorials, and responsive customer
+                    support team.</p>
             </div>
-            
+
             <div class="bg-white rounded-xl p-6 shadow-lg">
                 <div class="flex items-center mb-4">
                     <svg class="w-8 h-8 text-indigo-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
+                        <path
+                            d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z">
+                        </path>
                     </svg>
                     <h3 class="text-lg font-semibold text-gray-900">Member Photos</h3>
                 </div>
-                <p class="text-gray-600 text-sm">Upload and manage member photos to put faces to names and strengthen connections.</p>
+                <p class="text-gray-600 text-sm">Upload and manage member photos to put faces to names and strengthen
+                    connections.</p>
             </div>
         </div>
     </div>
@@ -227,31 +253,36 @@
                 Frequently Asked Questions
             </h2>
         </div>
-        
+
         <div class="max-w-4xl mx-auto space-y-8">
             <div class="bg-gray-50 rounded-lg p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-2">Is there a free trial?</h3>
-                <p class="text-gray-600">Yes! All plans include a 14-day free trial with full access to features. No credit card required to start.</p>
+                <p class="text-gray-600">Yes! All plans include a 14-day free trial with full access to features. No
+                    credit card required to start.</p>
             </div>
-            
+
             <div class="bg-gray-50 rounded-lg p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-2">Can I change plans later?</h3>
-                <p class="text-gray-600">Absolutely. You can upgrade or downgrade your plan at any time. Changes take effect at your next billing cycle.</p>
+                <p class="text-gray-600">Absolutely. You can upgrade or downgrade your plan at any time. Changes take
+                    effect at your next billing cycle.</p>
             </div>
-            
+
             <div class="bg-gray-50 rounded-lg p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-2">What happens if I exceed my user limit?</h3>
-                <p class="text-gray-600">We'll notify you when you approach your limit and help you upgrade to a suitable plan. Your service won't be interrupted.</p>
+                <p class="text-gray-600">We'll notify you when you approach your limit and help you upgrade to a
+                    suitable plan. Your service won't be interrupted.</p>
             </div>
-            
+
             <div class="bg-gray-50 rounded-lg p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-2">Is my church data secure?</h3>
-                <p class="text-gray-600">Yes. We use enterprise-grade encryption, regular security audits, and comply with privacy regulations to protect your data.</p>
+                <p class="text-gray-600">Yes. We use enterprise-grade encryption, regular security audits, and comply
+                    with privacy regulations to protect your data.</p>
             </div>
-            
+
             <div class="bg-gray-50 rounded-lg p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-2">Do you offer discounts for annual plans?</h3>
-                <p class="text-gray-600">Yes! Annual plans save up to 17% compared to monthly billing and include additional features like priority support.</p>
+                <p class="text-gray-600">Yes! Annual plans save up to 17% compared to monthly billing and include
+                    additional features like priority support.</p>
             </div>
         </div>
     </div>
@@ -267,10 +298,12 @@
             Join thousands of churches already building stronger communities with Church Directory.
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="#pricing" class="bg-white text-blue-600 hover:bg-gray-100 font-semibold py-4 px-8 rounded-lg transition-colors duration-200">
+            <a href="#pricing"
+                class="bg-white text-blue-600 hover:bg-gray-100 font-semibold py-4 px-8 rounded-lg transition-colors duration-200">
                 Choose Your Plan
             </a>
-            <a href="{% url 'church_directory:contact' %}" class="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold py-4 px-8 rounded-lg transition-all duration-200">
+            <a href="{% url 'church_directory:contact' %}"
+                class="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold py-4 px-8 rounded-lg transition-all duration-200">
                 Schedule Demo
             </a>
         </div>
@@ -280,31 +313,31 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const billingOptions = document.querySelectorAll('.billing-option');
-    
-    billingOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            const billing = this.dataset.billing;
-            
-            // Update active state
-            billingOptions.forEach(opt => opt.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Show/hide pricing
-            if (billing === 'annual') {
-                document.querySelectorAll('.pricing-monthly').forEach(el => el.classList.add('hidden'));
-                document.querySelectorAll('.pricing-annual').forEach(el => el.classList.remove('hidden'));
-                document.querySelectorAll('.cta-monthly').forEach(el => el.classList.add('hidden'));
-                document.querySelectorAll('.cta-annual').forEach(el => el.classList.remove('hidden'));
-            } else {
-                document.querySelectorAll('.pricing-monthly').forEach(el => el.classList.remove('hidden'));
-                document.querySelectorAll('.pricing-annual').forEach(el => el.classList.add('hidden'));
-                document.querySelectorAll('.cta-monthly').forEach(el => el.classList.remove('hidden'));
-                document.querySelectorAll('.cta-annual').forEach(el => el.classList.add('hidden'));
-            }
+    document.addEventListener('DOMContentLoaded', function () {
+        const billingOptions = document.querySelectorAll('.billing-option');
+
+        billingOptions.forEach(option => {
+            option.addEventListener('click', function () {
+                const billing = this.dataset.billing;
+
+                // Update active state
+                billingOptions.forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+
+                // Show/hide pricing
+                if (billing === 'annual') {
+                    document.querySelectorAll('.pricing-monthly').forEach(el => el.classList.add('hidden'));
+                    document.querySelectorAll('.pricing-annual').forEach(el => el.classList.remove('hidden'));
+                    document.querySelectorAll('.cta-monthly').forEach(el => el.classList.add('hidden'));
+                    document.querySelectorAll('.cta-annual').forEach(el => el.classList.remove('hidden'));
+                } else {
+                    document.querySelectorAll('.pricing-monthly').forEach(el => el.classList.remove('hidden'));
+                    document.querySelectorAll('.pricing-annual').forEach(el => el.classList.add('hidden'));
+                    document.querySelectorAll('.cta-monthly').forEach(el => el.classList.remove('hidden'));
+                    document.querySelectorAll('.cta-annual').forEach(el => el.classList.add('hidden'));
+                }
+            });
         });
     });
-});
 </script>
 {% endblock %}
