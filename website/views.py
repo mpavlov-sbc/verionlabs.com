@@ -223,7 +223,7 @@ class ContactView(TemplateView):
                 # Log the error but still show success to user
                 messages.success(request, 'Thank you for your message! We\'ll get back to you soon.')
             
-            return redirect('contact')
+            return redirect('website:contact')
         else:
             context = self.get_context_data()
             context['form'] = form

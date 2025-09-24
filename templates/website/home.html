@@ -12,11 +12,12 @@
             <p class="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
                 {{ site_config.hero_subheadline }}
             </p>
-            <a href="{% url 'website:services' %}" 
-               class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+            <a href="{% url 'website:services' %}"
+                class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
                 {{ site_config.hero_cta_text }}
                 <svg class="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6">
+                    </path>
                 </svg>
             </a>
         </div>
@@ -45,35 +46,37 @@
                 Our Expertise
             </h2>
             <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                Discover how our specialized services can transform your business with cutting-edge technology solutions.
+                Discover how our specialized services can transform your business with cutting-edge technology
+                solutions.
             </p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             {% for service in featured_services %}
-                <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6 text-center">
-                    <div class="flex justify-center mb-4">
-                        {% include 'website/includes/service_icon.html' with icon=service.icon size='lg' %}
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-4">{{ service.title }}</h3>
-                    <p class="text-gray-600 mb-6">{{ service.description }}</p>
-                    <a href="{{ service.get_absolute_url }}" 
-                       class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
-                        Learn More
-                        <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                    </a>
+            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6 text-center">
+                <div class="flex justify-center mb-4">
+                    {% include 'website/includes/service_icon.html' with icon=service.icon size='lg' %}
                 </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">{{ service.title }}</h3>
+                <p class="text-gray-600 mb-6">{{ service.description }}</p>
+                <a href="{{ service.get_absolute_url }}"
+                    class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
+                    Learn More
+                    <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
             {% endfor %}
         </div>
 
         <div class="text-center mt-12">
-            <a href="{% url 'website:services' %}" 
-               class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200">
+            <a href="{% url 'website:services' %}"
+                class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200">
                 View All Services
                 <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6">
+                    </path>
                 </svg>
             </a>
         </div>
@@ -89,60 +92,64 @@
                 Featured Projects
             </h2>
             <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                Take a look at some of our recent work and see how we've helped businesses transform their digital presence.
+                Take a look at some of our recent work and see how we've helped businesses transform their digital
+                presence.
             </p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             {% for demo in featured_demos %}
-                <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
-                    {% if demo.get_image_url %}
-                        <img src="{{ demo.get_image_url }}" alt="{{ demo.title }}" class="w-full h-48 object-cover">
-                    {% else %}
-                        <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
-                            <svg class="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                        </div>
-                    {% endif %}
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">{{ demo.title }}</h3>
-                        <p class="text-gray-600 mb-4">{{ demo.description|truncatewords:20 }}</p>
-                        
-                        <!-- Tags -->
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            {% for tag in demo.tags.all|slice:":3" %}
-                                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                                    {{ tag.name }}
-                                </span>
-                            {% endfor %}
-                        </div>
-                        
-                        <div class="flex space-x-4">
-                            {% if demo.live_demo_url and demo.live_demo_url != '#' %}
-                                <a href="{{ demo.live_demo_url }}" target="_blank"
-                                   class="text-blue-600 hover:text-blue-700 font-medium text-sm">
-                                    Live Demo →
-                                </a>
-                            {% endif %}
-                            {% if demo.github_url and demo.github_url != '#' %}
-                                <a href="{{ demo.github_url }}" target="_blank"
-                                   class="text-gray-600 hover:text-gray-700 font-medium text-sm">
-                                    View Code →
-                                </a>
-                            {% endif %}
-                        </div>
+            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+                {% if demo.get_image_url %}
+                <img src="{{ demo.get_image_url }}" alt="{{ demo.title }}" class="w-full h-48 object-cover">
+                {% else %}
+                <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                    <svg class="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                </div>
+                {% endif %}
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">{{ demo.title }}</h3>
+                    <p class="text-gray-600 mb-4">{{ demo.description|truncatewords:20 }}</p>
+
+                    <!-- Tags -->
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        {% for tag in demo.tags.all|slice:":3" %}
+                        <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                            {{ tag.name }}
+                        </span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="flex space-x-4">
+                        {% if demo.live_demo_url and demo.live_demo_url != '#' %}
+                        <a href="{{ demo.live_demo_url }}" target="_blank"
+                            class="text-blue-600 hover:text-blue-700 font-medium text-sm">
+                            Live Demo →
+                        </a>
+                        {% endif %}
+                        {% if demo.github_url and demo.github_url != '#' %}
+                        <a href="{{ demo.github_url }}" target="_blank"
+                            class="text-gray-600 hover:text-gray-700 font-medium text-sm">
+                            View Code →
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
+            </div>
             {% endfor %}
         </div>
 
         <div class="text-center mt-12">
-            <a href="{% url 'website:demos' %}" 
-               class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200">
+            <a href="{% url 'website:demos' %}"
+                class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200">
                 View All Projects
                 <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6">
+                    </path>
                 </svg>
             </a>
         </div>
@@ -161,14 +168,16 @@
                 {{ site_config.contact_cta_description }}
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{% url 'website:contact' %}" 
-                   class="inline-flex items-center bg-white text-blue-600 hover:bg-gray-50 px-8 py-3 rounded-lg font-medium transition-colors duration-200">
+                <a href="{% url 'website:contact' %}"
+                    class="inline-flex items-center bg-white text-blue-600 hover:bg-gray-50 px-8 py-3 rounded-lg font-medium transition-colors duration-200">
                     {{ site_config.contact_cta_button_text }}
                 </a>
-                <a href="mailto:{{ site_config.email }}" 
-                   class="inline-flex items-center border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 rounded-lg font-medium transition-colors duration-200">
+                <a href="mailto:{{ site_config.email }}"
+                    class="inline-flex items-center border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 rounded-lg font-medium transition-colors duration-200">
                     <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 7.89a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 8l7.89 7.89a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                        </path>
                     </svg>
                     Send Email
                 </a>

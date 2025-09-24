@@ -3,7 +3,8 @@
 
 {% block title %}Demos - {{ site_config.company_name }}{% endblock %}
 
-{% block meta_description %}Explore our portfolio of innovative projects and demonstrations showcasing our expertise in cloud architecture, AI & machine learning, and custom web applications.{% endblock %}
+{% block meta_description %}Explore our portfolio of innovative projects and demonstrations showcasing our expertise in
+cloud architecture, AI & machine learning, and custom web applications.{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
@@ -14,7 +15,8 @@
                 Our Portfolio
             </h1>
             <p class="text-xl text-gray-600">
-                Explore our latest projects and demonstrations showcasing innovative solutions across various industries and technologies.
+                Explore our latest projects and demonstrations showcasing innovative solutions across various industries
+                and technologies.
             </p>
         </div>
     </div>
@@ -28,23 +30,24 @@
             <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
                 {% if demo.get_image_url %}
                 <div class="h-48 overflow-hidden">
-                    <img src="{{ demo.get_image_url }}" 
-                         alt="{{ demo.title }}" 
-                         class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                         loading="lazy">
+                    <img src="{{ demo.get_image_url }}" alt="{{ demo.title }}"
+                        class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        loading="lazy">
                 </div>
                 {% else %}
                 <div class="h-48 bg-gray-200 flex items-center justify-center">
                     <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
                     </svg>
                 </div>
                 {% endif %}
-                
+
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-800 mb-3">{{ demo.title }}</h3>
                     <p class="text-gray-600 mb-4 leading-relaxed">{{ demo.description }}</p>
-                    
+
                     <div class="flex flex-wrap gap-2 mb-6">
                         {% for tag in demo.tags.all %}
                         <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
@@ -52,25 +55,26 @@
                         </span>
                         {% endfor %}
                     </div>
-                    
+
                     <div class="flex gap-3">
                         {% if demo.live_demo_url %}
-                        <a href="{{ demo.live_demo_url }}" 
-                           target="_blank"
-                           class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                        <a href="{{ demo.live_demo_url }}" target="_blank"
+                            class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300">
                             <svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
+                                </path>
                             </svg>
                             Live Demo
                         </a>
                         {% endif %}
-                        
+
                         {% if demo.github_url %}
-                        <a href="{{ demo.github_url }}" 
-                           target="_blank"
-                           class="flex-1 inline-flex items-center justify-center px-4 py-2 border-2 border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors duration-300">
+                        <a href="{{ demo.github_url }}" target="_blank"
+                            class="flex-1 inline-flex items-center justify-center px-4 py-2 border-2 border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors duration-300">
                             <svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
                             </svg>
                             Code
                         </a>
@@ -80,11 +84,13 @@
             </div>
             {% endfor %}
         </div>
-        
+
         {% if not demos %}
         <div class="text-center py-16">
             <svg class="mx-auto w-24 h-24 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                </path>
             </svg>
             <h3 class="text-xl font-semibold text-gray-600 mb-2">Coming Soon</h3>
             <p class="text-gray-500">We're working on some exciting projects to showcase here.</p>
@@ -104,12 +110,12 @@
                 Let's discuss how we can create innovative solutions for your business needs.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{% url 'website:contact' %}" 
-                   class="inline-flex items-center px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                <a href="{% url 'website:contact' %}"
+                    class="inline-flex items-center px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-300">
                     Get Started
                 </a>
-                <a href="{% url 'website:services' %}" 
-                   class="inline-flex items-center px-8 py-4 border-2 border-blue-600 text-blue-600 text-lg font-semibold rounded-lg hover:bg-blue-600 hover:text-white transition-colors duration-300">
+                <a href="{% url 'website:services' %}"
+                    class="inline-flex items-center px-8 py-4 border-2 border-blue-600 text-blue-600 text-lg font-semibold rounded-lg hover:bg-blue-600 hover:text-white transition-colors duration-300">
                     Our Services
                 </a>
             </div>

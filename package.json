@@ -1,13 +1,13 @@
 {
-  "name": "verionlabs-django",
-  "version": "1.0.0",
-  "description": "VerionLabs Django website with Tailwind CSS",
-  "scripts": {
-    "build-css": "tailwindcss -i ./static/css/input.css -o ./static/css/tailwind.css --watch",
-    "build-css-prod": "tailwindcss -i ./static/css/input.css -o ./static/css/tailwind.css --minify"
-  },
-  "devDependencies": {
-    "tailwindcss": "^3.4.0",
-    "@tailwindcss/forms": "^0.5.7"
-  }
+    "name": "verionlabs-django",
+    "version": "1.0.0",
+    "description": "VerionLabs Django website with Tailwind CSS",
+    "scripts": {
+        "build-css": "tailwindcss -i ./static/css/input.css -o ./static/css/tailwind.css --watch",
+        "build-css-prod": "tailwindcss -i ./static/css/input.css -o ./static/css/tailwind.css --minify"
+    },
+    "devDependencies": {
+        "tailwindcss": "^3.4.0",
+        "@tailwindcss/forms": "^0.5.7"
+    }
 }

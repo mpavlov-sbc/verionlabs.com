@@ -16,7 +16,7 @@
     --primary-700: #1e293b;
     --primary-800: #0f172a;
     --primary-900: #020617;
-    
+
     /* Accent colors (cyan-based) */
     --accent-50: #f0f9ff;
     --accent-100: #e0f2fe;
@@ -28,7 +28,7 @@
     --accent-700: #0369a1;
     --accent-800: #075985;
     --accent-900: #0c4a6e;
-    
+
     /* Neutral colors */
     --neutral-50: #fafafa;
     --neutral-100: #f5f5f5;
@@ -53,7 +53,8 @@ body {
 
 /* Custom component styles with proper color scheme */
 .btn-primary {
-    background-color: var(--primary-600); /* Use slate-600 equivalent */
+    background-color: var(--primary-600);
+    /* Use slate-600 equivalent */
     color: white;
     font-weight: 500;
     padding: 0.5rem 1rem;
@@ -64,7 +65,8 @@ body {
 }
 
 .btn-primary:hover {
-    background-color: var(--primary-700); /* Use slate-700 equivalent */
+    background-color: var(--primary-700);
+    /* Use slate-700 equivalent */
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(51, 65, 85, 0.3);
 }
@@ -133,7 +135,8 @@ body {
 
 /* Hero Title with Advanced Styling */
 .hero-title {
-    color: var(--primary-800); /* Use solid color instead of gradient */
+    color: var(--primary-800);
+    /* Use solid color instead of gradient */
     position: relative;
     display: inline-block;
     font-weight: 800;
@@ -144,7 +147,8 @@ body {
 }
 
 .hero-title .accent-word {
-    color: var(--accent-500); /* Use solid accent color */
+    color: var(--accent-500);
+    /* Use solid accent color */
     font-weight: 900;
 }
 
@@ -192,8 +196,16 @@ body {
 }
 
 @keyframes blink {
-    0%, 50% { opacity: 1; }
-    51%, 100% { opacity: 0; }
+
+    0%,
+    50% {
+        opacity: 1;
+    }
+
+    51%,
+    100% {
+        opacity: 0;
+    }
 }
 
 /* Floating Particles */
@@ -220,12 +232,15 @@ body {
         transform: translateY(100vh) rotate(0deg);
         opacity: 0;
     }
+
     10% {
         opacity: 1;
     }
+
     90% {
         opacity: 1;
     }
+
     100% {
         transform: translateY(-100px) rotate(360deg);
         opacity: 0;
@@ -312,8 +327,16 @@ body {
 }
 
 @keyframes blink {
-    0%, 50% { border-color: #667eea; }
-    51%, 100% { border-color: transparent; }
+
+    0%,
+    50% {
+        border-color: #667eea;
+    }
+
+    51%,
+    100% {
+        border-color: transparent;
+    }
 }
 
 /* Gradient animations */
@@ -324,9 +347,17 @@ body {
 }
 
 @keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
 }
 
 /* Floating elements */
@@ -335,8 +366,15 @@ body {
 }
 
 @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-20px);
+    }
 }
 
 /* Pulse effect */
@@ -348,6 +386,7 @@ body {
     from {
         box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
     }
+
     to {
         box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
     }
@@ -391,16 +430,31 @@ body {
 }
 
 /* Stagger animation delays */
-.animation-delay-1 { animation-delay: 0.1s; }
-.animation-delay-2 { animation-delay: 0.2s; }
-.animation-delay-3 { animation-delay: 0.3s; }
-.animation-delay-4 { animation-delay: 0.4s; }
-.animation-delay-5 { animation-delay: 0.5s; }
+.animation-delay-1 {
+    animation-delay: 0.1s;
+}
+
+.animation-delay-2 {
+    animation-delay: 0.2s;
+}
+
+.animation-delay-3 {
+    animation-delay: 0.3s;
+}
+
+.animation-delay-4 {
+    animation-delay: 0.4s;
+}
+
+.animation-delay-5 {
+    animation-delay: 0.5s;
+}
 
 @keyframes fadeIn {
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -411,6 +465,7 @@ body {
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -422,6 +477,7 @@ body {
         opacity: 0;
         transform: translateX(-30px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -433,6 +489,7 @@ body {
         opacity: 0;
         transform: translateX(30px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -444,13 +501,16 @@ body {
         opacity: 0;
         transform: scale(0.3);
     }
+
     50% {
         opacity: 1;
         transform: scale(1.05);
     }
+
     70% {
         transform: scale(0.9);
     }
+
     100% {
         opacity: 1;
         transform: scale(1);
@@ -462,6 +522,7 @@ body {
         opacity: 0;
         transform: scale(0.9);
     }
+
     to {
         opacity: 1;
         transform: scale(1);
@@ -479,8 +540,13 @@ body {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Responsive utilities */
@@ -606,12 +672,14 @@ section p {
 }
 
 /* Fix button colors in cards */
-.service-card a, .demo-card a {
+.service-card a,
+.demo-card a {
     border-color: var(--accent-500);
     color: var(--accent-500);
 }
 
-.service-card a:hover, .demo-card a:hover {
+.service-card a:hover,
+.demo-card a:hover {
     background-color: var(--accent-500);
     color: white;
 }
@@ -637,8 +705,13 @@ section p {
 }
 
 @keyframes shimmer {
-    0% { left: -100%; }
-    100% { left: 100%; }
+    0% {
+        left: -100%;
+    }
+
+    100% {
+        left: 100%;
+    }
 }
 
 .dev-banner-icon {
@@ -646,8 +719,15 @@ section p {
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
 }
 
 /* Gradient utilities for banner */
