@@ -91,8 +91,7 @@
                         <div class="flex items-center mb-2">
                             <span class="text-sm text-gray-500 line-through mr-2">${{ tier.monthly_price|floatformat:0 }} × 12</span>
                             {% if tier.annual_discount_percent %}
-                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Save {{
-                                tier.annual_discount_percent }}%</span>
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Save {{ tier.annual_discount_percent }}%</span>
                             {% endif %}
                         </div>
                         <p class="text-sm text-gray-600 mb-6">{{ tier.users_display }} users</p>
