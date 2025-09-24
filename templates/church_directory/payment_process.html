@@ -168,8 +168,7 @@
 
                         {% if subscription.discount_amount > 0 %}
                         <div class="flex justify-between text-green-600">
-                            <span>Discount{% if subscription.coupon_used %} ({{ subscription.coupon_used.code }}){%
-                                endif %}</span>
+                            <span>Discount{% if subscription.coupon_used %} ({{ subscription.coupon_used.code }}){% endif %}</span>
                             <span>-${{ subscription.discount_amount|floatformat:2 }}</span>
                         </div>
                         {% endif %}
