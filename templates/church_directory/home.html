@@ -1,0 +1,320 @@
+{% extends 'church_directory/base.html' %}
+{% load static %}
+
+{% block title %}Church Directory - Stay Connected with Your Church Family{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="gradient-bg text-white section-padding">
+    <div class="container-width">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <!-- Left Column - Content -->
+            <div>
+                <h1 class="text-4xl lg:text-6xl font-bold mb-6 leading-tight">
+                    {% if config %}{{ config.hero_headline }}{% else %}Stay Connected with Your Church Family – Instantly & Securely{% endif %}
+                </h1>
+                <p class="text-xl lg:text-2xl mb-8 text-blue-100">
+                    {% if config %}{{ config.hero_subline }}{% else %}Secure member directories that bring congregations closer together{% endif %}
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="{% url 'church_directory:pricing' %}" class="bg-white text-blue-600 hover:bg-gray-100 font-semibold py-4 px-8 rounded-lg transition-colors duration-200 text-center">
+                        Get Started Today
+                    </a>
+                    <a href="{% url 'church_directory:features' %}" class="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold py-4 px-8 rounded-lg transition-all duration-200 text-center">
+                        Learn More
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Right Column - Visual -->
+            <div class="relative">
+                <div class="bg-white rounded-2xl shadow-2xl p-8 transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM5 8a2 2 0 00-2 2v1a2 2 0 002 2h1v4.593a.5.5 0 00.74.437L9.5 16.5h5a2 2 0 002-2v-1a2 2 0 00-2-2H5z"></path>
+                                </svg>
+                            </div>
+                            <div class="text-gray-900">
+                                <div class="font-semibold">John Smith</div>
+                                <div class="text-sm text-gray-600">Pastor | First Baptist</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div class="text-gray-900">
+                                <div class="font-semibold">Sarah Johnson</div>
+                                <div class="text-sm text-gray-600">Worship Leader</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                                <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
+                                </svg>
+                            </div>
+                            <div class="text-gray-900">
+                                <div class="font-semibold">Mike Wilson</div>
+                                <div class="text-sm text-gray-600">Youth Pastor</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Overview Section -->
+<section class="section-padding bg-gray-50">
+    <div class="container-width">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+                Built Specifically for Churches
+            </h2>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Every feature is designed with the unique needs, values, and privacy concerns of faith communities in mind.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Feature 1 -->
+            <div class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM5 8a2 2 0 00-2 2v1a2 2 0 002 2h1v4.593a.5.5 0 00.74.437L9.5 16.5h5a2 2 0 002-2v-1a2 2 0 00-2-2H5z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">Complete Member Directory</h3>
+                <p class="text-gray-600">
+                    Browse a comprehensive directory of all church members with photos, contact details, and family connections.
+                </p>
+            </div>
+            
+            <!-- Feature 2 -->
+            <div class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">Enterprise-Grade Security</h3>
+                <p class="text-gray-600">
+                    Your member data is protected with military-grade encryption and sophisticated privacy controls.
+                </p>
+            </div>
+            
+            <!-- Feature 3 -->
+            <div class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="w-16 h-16 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">Group Management</h3>
+                <p class="text-gray-600">
+                    Organize ministry groups, small groups, and committees with detailed member rosters and information.
+                </p>
+            </div>
+            
+            <!-- Feature 4 -->
+            <div class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="w-16 h-16 bg-orange-100 rounded-lg flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">Self-Service Updates</h3>
+                <p class="text-gray-600">
+                    Members update their own information, reducing administrative burden by up to 80%.
+                </p>
+            </div>
+            
+            <!-- Feature 5 -->
+            <div class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="w-16 h-16 bg-red-100 rounded-lg flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2L3 7v11a1 1 0 001 1h3v-8a1 1 0 011-1h4a1 1 0 011 1v8h3a1 1 0 001-1V7l-7-5z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">Mobile App Access</h3>
+                <p class="text-gray-600">
+                    Works seamlessly across iOS and Android devices with offline access to key information.
+                </p>
+            </div>
+            
+            <!-- Feature 6 -->
+            <div class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div class="w-16 h-16 bg-indigo-100 rounded-lg flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path>
+                        <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">Admin Dashboard</h3>
+                <p class="text-gray-600">
+                    Comprehensive administrative tools for managing members, groups, and communications efficiently.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Preview Section -->
+{% if featured_tiers %}
+<section class="section-padding">
+    <div class="container-width">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+                Simple, Transparent Pricing
+            </h2>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Choose the plan that fits your congregation size. All plans include our core features with no hidden fees.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-{{ featured_tiers|length }} gap-8 max-w-5xl mx-auto">
+            {% for tier in featured_tiers %}
+            <div class="bg-white rounded-2xl shadow-xl border-2 {% if tier.is_popular %}border-blue-500{% else %}border-gray-200{% endif %} relative overflow-hidden">
+                {% if tier.is_popular %}
+                <div class="bg-blue-500 text-white text-center py-2 text-sm font-semibold">
+                    MOST POPULAR
+                </div>
+                {% endif %}
+                
+                <div class="p-8">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ tier.name }}</h3>
+                    <p class="text-gray-600 mb-6">{{ tier.description }}</p>
+                    
+                    <div class="mb-6">
+                        <div class="flex items-baseline">
+                            <span class="text-4xl font-bold text-gray-900">${{ tier.monthly_price|floatformat:0 }}</span>
+                            <span class="text-gray-600 ml-2">/month</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">{{ tier.users_display }} users</p>
+                    </div>
+                    
+                    <ul class="space-y-3 mb-8">
+                        {% for feature in tier.features|slice:":5" %}
+                        <li class="flex items-start">
+                            <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-gray-700">{{ feature }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    
+                    <a href="{% url 'church_directory:checkout' tier.id %}" class="block w-full text-center {% if tier.is_popular %}btn-primary{% else %}btn-outline{% endif %}">
+                        Get Started
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-12">
+            <a href="{% url 'church_directory:pricing' %}" class="btn-secondary">
+                View All Plans & Features
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Use Cases Section -->
+<section class="section-padding bg-gray-50">
+    <div class="container-width">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+                See It In Action
+            </h2>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Real scenarios from churches using Church Directory to strengthen their communities.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Use Case 1 -->
+            <div class="bg-white rounded-xl p-8 shadow-lg">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">The Ministry Leader</h4>
+                        <p class="text-sm text-gray-600">Pastor Mike</p>
+                    </div>
+                </div>
+                <blockquote class="text-gray-700 italic">
+                    "I needed to quickly contact all 15 members about a location change for Thursday's meeting. Instead of making individual calls, I selected my Bible study group and sent a notification in under 30 seconds. Every member received the update instantly."
+                </blockquote>
+            </div>
+            
+            <!-- Use Case 2 -->
+            <div class="bg-white rounded-xl p-8 shadow-lg">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">The Caring Congregant</h4>
+                        <p class="text-sm text-gray-600">Sarah</p>
+                    </div>
+                </div>
+                <blockquote class="text-gray-700 italic">
+                    "When I heard the Johnson family was going through a difficult time, I quickly found their contact information and coordinated with other small group members to organize a week's worth of meal deliveries."
+                </blockquote>
+            </div>
+            
+            <!-- Use Case 3 -->
+            <div class="bg-white rounded-xl p-8 shadow-lg">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path>
+                            <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">The Church Administrator</h4>
+                        <p class="text-sm text-gray-600">Lisa</p>
+                    </div>
+                </div>
+                <blockquote class="text-gray-700 italic">
+                    "I used to spend 6 hours every month updating the printed directory. Now members update their own profiles, and I've reclaimed those hours for more meaningful ministry work."
+                </blockquote>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="section-padding gradient-bg text-white">
+    <div class="container-width text-center">
+        <h2 class="text-3xl lg:text-4xl font-bold mb-6">
+            Ready to Connect Your Congregation?
+        </h2>
+        <p class="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+            Join thousands of churches already using Church Directory to build stronger communities and streamline member management.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'church_directory:pricing' %}" class="bg-white text-blue-600 hover:bg-gray-100 font-semibold py-4 px-8 rounded-lg transition-colors duration-200">
+                Start Free Trial
+            </a>
+            <a href="{% url 'church_directory:contact' %}" class="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold py-4 px-8 rounded-lg transition-all duration-200">
+                Schedule Demo
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

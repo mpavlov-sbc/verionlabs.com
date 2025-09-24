@@ -31,6 +31,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('website.urls')),
+    path('directory/', include('church_directory.urls')),
     
     # SEO URLs - will add after migrations
     # path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),

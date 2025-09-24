@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sitemaps',
     'website',
+    'church_directory',
 ]
 
 MIDDLEWARE = [
@@ -147,6 +148,11 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@verionlabs.co
 
 # Contact form email recipients
 CONTACT_EMAIL_RECIPIENTS = config('CONTACT_EMAIL_RECIPIENTS', default='contact@verionlabs.com', cast=lambda v: [s.strip() for s in v.split(',')])
+
+# Stripe settings
+STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY', default='pk_test_your_publishable_key_here')
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='sk_test_your_secret_key_here')
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='whsec_your_webhook_secret_here')
 
 # Security settings for production
 if not DEBUG:

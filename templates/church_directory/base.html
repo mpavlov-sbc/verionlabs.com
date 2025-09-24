@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ page_title|default:"Church Directory" }}{% endblock %}</title>
+    
+    <!-- Meta tags for SEO -->
+    <meta name="description" content="{% block description %}{{ config.site_description|default:'The Complete Church Directory Solution for Modern Congregations' }}{% endblock %}">
+    <meta name="keywords" content="church directory, church management, member directory, church app, congregation management">
+    <meta name="author" content="VerionLabs">
+    
+    <!-- Open Graph meta tags -->
+    <meta property="og:title" content="{% block og_title %}{{ page_title|default:'Church Directory' }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ config.site_description|default:'The Complete Church Directory Solution for Modern Congregations' }}{% endblock %}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    
+    <!-- Twitter Card meta tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ page_title|default:'Church Directory' }}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ config.site_description|default:'The Complete Church Directory Solution for Modern Congregations' }}{% endblock %}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% load static %}{% static 'images/favicon.ico' %}">
+    <link rel="manifest" href="{% load static %}{% static 'images/site.webmanifest' %}">
+    
+    <!-- Tailwind CSS -->
+    <link href="{% load static %}{% static 'css/tailwind.css' %}" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            display: inline-block;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+        .btn-secondary {
+            background-color: #f3f4f6;
+            color: #1f2937;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            transition: all 0.2s;
+            display: inline-block;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn-secondary:hover {
+            background-color: #e5e7eb;
+        }
+        .btn-outline {
+            border: 2px solid #2563eb;
+            color: #2563eb;
+            background-color: transparent;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            display: inline-block;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn-outline:hover {
+            background-color: #2563eb;
+            color: white;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .section-padding {
+            padding-top: 4rem;
+            padding-bottom: 4rem;
+        }
+        @media (min-width: 1024px) {
+            .section-padding {
+                padding-top: 6rem;
+                padding-bottom: 6rem;
+            }
+        }
+        .container-width {
+            max-width: 80rem;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        @media (min-width: 640px) {
+            .container-width {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
+        }
+        @media (min-width: 1024px) {
+            .container-width {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-white text-gray-900">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="container-width">
+            <div class="flex justify-between items-center py-4">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <a href="{% url 'church_directory:home' %}" class="flex items-center space-x-2">
+                        <svg class="h-8 w-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"></path>
+                        </svg>
+                        <span class="text-xl font-bold text-gray-900">Church Directory</span>
+                    </a>
+                </div>
+                
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="{% url 'church_directory:home' %}" class="text-gray-700 hover:text-blue-600 transition-colors font-medium">Home</a>
+                    <a href="{% url 'church_directory:features' %}" class="text-gray-700 hover:text-blue-600 transition-colors font-medium">Features</a>
+                    <a href="{% url 'church_directory:pricing' %}" class="text-gray-700 hover:text-blue-600 transition-colors font-medium">Pricing</a>
+                    <a href="{% url 'church_directory:about' %}" class="text-gray-700 hover:text-blue-600 transition-colors font-medium">About</a>
+                    <a href="{% url 'church_directory:contact' %}" class="text-gray-700 hover:text-blue-600 transition-colors font-medium">Contact</a>
+                </div>
+                
+                <!-- CTA Button -->
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="{% url 'church_directory:pricing' %}" class="btn-primary">Get Started</a>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button type="button" class="mobile-menu-toggle text-gray-700 hover:text-blue-600" aria-label="Open main menu">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mobile Navigation -->
+            <div class="mobile-menu hidden md:hidden pb-4 border-t border-gray-200 mt-4 pt-4">
+                <div class="flex flex-col space-y-4">
+                    <a href="{% url 'church_directory:home' %}" class="text-gray-700 hover:text-blue-600 transition-colors font-medium py-2">Home</a>
+                    <a href="{% url 'church_directory:features' %}" class="text-gray-700 hover:text-blue-600 transition-colors font-medium py-2">Features</a>
+                    <a href="{% url 'church_directory:pricing' %}" class="text-gray-700 hover:text-blue-600 transition-colors font-medium py-2">Pricing</a>
+                    <a href="{% url 'church_directory:about' %}" class="text-gray-700 hover:text-blue-600 transition-colors font-medium py-2">About</a>
+                    <a href="{% url 'church_directory:contact' %}" class="text-gray-700 hover:text-blue-600 transition-colors font-medium py-2">Contact</a>
+                    <a href="{% url 'church_directory:pricing' %}" class="btn-primary inline-block text-center mt-4">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Messages -->
+    {% if messages %}
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+            <div class="container-width">
+                {% for message in messages %}
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            {% if message.tags == 'success' %}
+                                <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                            {% elif message.tags == 'error' %}
+                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                </svg>
+                            {% else %}
+                                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                </svg>
+                            {% endif %}
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm {% if message.tags == 'success' %}text-green-800{% elif message.tags == 'error' %}text-red-800{% else %}text-yellow-800{% endif %}">
+                                {{ message }}
+                            </p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white">
+        <div class="container-width py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Company Info -->
+                <div class="md:col-span-2">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <svg class="h-8 w-8 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"></path>
+                        </svg>
+                        <span class="text-xl font-bold">Church Directory</span>
+                    </div>
+                    <p class="text-gray-300 mb-4">
+                        {% if config %}{{ config.site_description }}{% else %}The Complete Church Directory Solution for Modern Congregations{% endif %}
+                    </p>
+                    {% if config.app_store_url or config.google_play_url %}
+                    <div class="flex space-x-4">
+                        {% if config.app_store_url %}
+                        <a href="{{ config.app_store_url }}" class="text-gray-300 hover:text-white">
+                            <span class="sr-only">Download on App Store</span>
+                            <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 2L3 7v11a1 1 0 001 1h3v-8a1 1 0 011-1h4a1 1 0 011 1v8h3a1 1 0 001-1V7l-7-5z"></path>
+                            </svg>
+                        </a>
+                        {% endif %}
+                        {% if config.google_play_url %}
+                        <a href="{{ config.google_play_url }}" class="text-gray-300 hover:text-white">
+                            <span class="sr-only">Get it on Google Play</span>
+                            <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 2L3 7v11a1 1 0 001 1h3v-8a1 1 0 011-1h4a1 1 0 011 1v8h3a1 1 0 001-1V7l-7-5z"></path>
+                            </svg>
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Quick Links -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Product</h3>
+                    <ul class="space-y-2">
+                        <li><a href="{% url 'church_directory:features' %}" class="text-gray-300 hover:text-white">Features</a></li>
+                        <li><a href="{% url 'church_directory:pricing' %}" class="text-gray-300 hover:text-white">Pricing</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Security</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Integrations</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Support -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Support</h3>
+                    <ul class="space-y-2">
+                        <li><a href="{% url 'church_directory:contact' %}" class="text-gray-300 hover:text-white">Contact Us</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Help Center</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+                <p class="text-gray-300">&copy; {% now "Y" %} VerionLabs. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- JavaScript -->
+    <script>
+        // Mobile menu toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.querySelector('.mobile-menu-toggle');
+            const mobileMenu = document.querySelector('.mobile-menu');
+            
+            if (menuToggle && mobileMenu) {
+                menuToggle.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
