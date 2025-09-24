@@ -315,6 +315,20 @@ class WebsiteConfig(models.Model):
     app_store_url = models.URLField(blank=True)
     google_play_url = models.URLField(blank=True)
     
+    # Footer links
+    help_center_url = models.URLField(
+        blank=True,
+        help_text="URL for Help Center page (external link)"
+    )
+    privacy_policy_url = models.URLField(
+        blank=True,
+        help_text="URL for Privacy Policy page (external link)"
+    )
+    terms_of_service_url = models.URLField(
+        blank=True,
+        help_text="URL for Terms of Service page (external link)"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
