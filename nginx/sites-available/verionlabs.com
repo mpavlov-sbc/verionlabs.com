@@ -3,7 +3,7 @@ server {
     server_name verionlabs.com www.verionlabs.com;
     
     # Redirect all HTTP traffic to HTTPS
-    return 301 https://$server_name$request_uri;
+    return 301 https://verionlabs.com$request_uri;
 }
 
 # HTTPS server (for production with SSL)
@@ -50,13 +50,13 @@ server {
         add_header Content-Type text/plain;
     }
 
-    # Main application - exclude /directory/ path
+    # Block access to /directory/ path on main domain
+    location /directory/ {
+        return 404;
+    }
+
+    # Main application
     location / {
-        # Block access to /directory/ path on main domain
-        location /directory/ {
-            return 404;
-        }
-        
         proxy_pass http://django_web;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
