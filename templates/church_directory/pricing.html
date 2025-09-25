@@ -120,7 +120,7 @@
 
                     <!-- Monthly CTA -->
                     <div class="cta-monthly">
-                        <a href="{% url 'church_directory:checkout' tier.id %}?billing=monthly"
+                        <a href="{% url 'church_directory:checkout' %}?tier={{ tier.id }}&billing=monthly"
                             class="block w-full text-center {% if tier.is_popular %}btn-primary{% else %}btn-outline{% endif %}">
                             Get Started Monthly
                         </a>
@@ -128,7 +128,7 @@
 
                     <!-- Annual CTA -->
                     <div class="cta-annual hidden">
-                        <a href="{% url 'church_directory:checkout' tier.id %}?billing=annual"
+                        <a href="{% url 'church_directory:checkout' %}?tier={{ tier.id }}&billing=annual"
                             class="block w-full text-center {% if tier.is_popular %}btn-primary{% else %}btn-outline{% endif %}">
                             Get Started Annual
                         </a>

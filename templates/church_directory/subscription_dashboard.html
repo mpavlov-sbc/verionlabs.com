@@ -1,0 +1,350 @@
+{% extends 'church_directory/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .integration-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .integration-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-weight: 600;
+    }
+    
+    .status-active { background-color: #d1fae5; color: #065f46; }
+    .status-pending { background-color: #fef3c7; color: #92400e; }
+    .status-failed { background-color: #fecaca; color: #991b1b; }
+    .status-cancelled { background-color: #e5e7eb; color: #374151; }
+    
+    .integration-completed { background-color: #d1fae5; color: #065f46; }
+    .integration-failed { background-color: #fecaca; color: #991b1b; }
+    .integration-pending { background-color: #fef3c7; color: #92400e; }
+    .integration-not-set { background-color: #e5e7eb; color: #374151; }
+    
+    .action-button {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        border-radius: 0.375rem;
+        transition: all 0.2s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<section class="bg-gray-50 py-8">
+    <div class="container-width">
+        <h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+            Subscription Dashboard
+        </h1>
+        <p class="text-lg text-gray-600">
+            Manage subscriptions and monitor backend integrations
+        </p>
+    </div>
+</section>
+
+<!-- Statistics Cards -->
+<section class="section-padding">
+    <div class="container-width">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
+            <div class="stat-card text-white p-6 rounded-xl">
+                <h3 class="text-lg font-semibold mb-2">Total</h3>
+                <p class="text-3xl font-bold">{{ stats.total }}</p>
+                <p class="text-sm opacity-80">All subscriptions</p>
+            </div>
+            
+            <div class="stat-card text-white p-6 rounded-xl">
+                <h3 class="text-lg font-semibold mb-2">Active</h3>
+                <p class="text-3xl font-bold text-green-300">{{ stats.active }}</p>
+                <p class="text-sm opacity-80">Paying customers</p>
+            </div>
+            
+            <div class="stat-card text-white p-6 rounded-xl">
+                <h3 class="text-lg font-semibold mb-2">Pending</h3>
+                <p class="text-3xl font-bold text-yellow-300">{{ stats.pending }}</p>
+                <p class="text-sm opacity-80">Awaiting payment</p>
+            </div>
+            
+            <div class="stat-card text-white p-6 rounded-xl">
+                <h3 class="text-lg font-semibold mb-2">Failed</h3>
+                <p class="text-3xl font-bold text-red-300">{{ stats.failed }}</p>
+                <p class="text-sm opacity-80">Payment failed</p>
+            </div>
+            
+            <div class="stat-card text-white p-6 rounded-xl">
+                <h3 class="text-lg font-semibold mb-2">Cancelled</h3>
+                <p class="text-3xl font-bold text-gray-300">{{ stats.cancelled }}</p>
+                <p class="text-sm opacity-80">Cancelled subs</p>
+            </div>
+        </div>
+
+        <!-- Backend Integration Status -->
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Backend Integration Status</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="integration-card bg-green-50 p-6 rounded-lg border border-green-200">
+                    <h3 class="text-lg font-semibold text-green-800 mb-2">Completed</h3>
+                    <p class="text-3xl font-bold text-green-600">{{ integration_stats.completed }}</p>
+                    <p class="text-sm text-green-700">Successfully integrated</p>
+                </div>
+                
+                <div class="integration-card bg-red-50 p-6 rounded-lg border border-red-200">
+                    <h3 class="text-lg font-semibold text-red-800 mb-2">Failed</h3>
+                    <p class="text-3xl font-bold text-red-600">{{ integration_stats.failed }}</p>
+                    <p class="text-sm text-red-700">Integration failed</p>
+                </div>
+                
+                <div class="integration-card bg-yellow-50 p-6 rounded-lg border border-yellow-200">
+                    <h3 class="text-lg font-semibold text-yellow-800 mb-2">Pending</h3>
+                    <p class="text-3xl font-bold text-yellow-600">{{ integration_stats.pending }}</p>
+                    <p class="text-sm text-yellow-700">Integration pending</p>
+                </div>
+                
+                <div class="integration-card bg-gray-50 p-6 rounded-lg border border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Not Set</h3>
+                    <p class="text-3xl font-bold text-gray-600">{{ integration_stats.not_set }}</p>
+                    <p class="text-sm text-gray-700">Status not set</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Subscriptions -->
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Recent Subscriptions</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-3 px-4 font-semibold text-gray-700">Church</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-700">Contact</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-700">Plan</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-700">Amount</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-700">Integration</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-700">Created</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subscription in recent_subscriptions %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="py-3 px-4">
+                                <div class="font-medium text-gray-900">{{ subscription.church_name }}</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="text-gray-900">{{ subscription.contact_name }}</div>
+                                <div class="text-sm text-gray-600">{{ subscription.email }}</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="font-medium">{{ subscription.pricing_tier.name }}</div>
+                                <div class="text-sm text-gray-600">{{ subscription.billing_period|capfirst }}</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="font-medium">${{ subscription.final_amount }}</span>
+                            </td>
+                            <td class="py-3 px-4">
+                                {% if subscription.status == 'active' %}
+                                <span class="status-badge status-active">Active</span>
+                                {% elif subscription.status == 'pending' %}
+                                <span class="status-badge status-pending">Pending</span>
+                                {% elif subscription.status == 'failed' %}
+                                <span class="status-badge status-failed">Failed</span>
+                                {% elif subscription.status == 'cancelled' %}
+                                <span class="status-badge status-cancelled">Cancelled</span>
+                                {% else %}
+                                <span class="status-badge status-cancelled">{{ subscription.status|capfirst }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4">
+                                {% if subscription.backend_integration_status == 'completed' %}
+                                <span class="status-badge integration-completed">Completed</span>
+                                {% elif subscription.backend_integration_status == 'failed' %}
+                                <span class="status-badge integration-failed">Failed</span>
+                                {% elif subscription.backend_integration_status == 'pending' %}
+                                <span class="status-badge integration-pending">Pending</span>
+                                {% else %}
+                                <span class="status-badge integration-not-set">Not Set</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="text-sm text-gray-600">{{ subscription.created_at|date:"M j, Y" }}</div>
+                                <div class="text-xs text-gray-500">{{ subscription.created_at|time:"g:i A" }}</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex space-x-2">
+                                    {% if subscription.status == 'active' and subscription.backend_integration_status != 'completed' %}
+                                    <button onclick="retryIntegration('{{ subscription.id }}')"
+                                            class="action-button bg-blue-600 text-white hover:bg-blue-700">
+                                        Retry
+                                    </button>
+                                    {% endif %}
+                                    
+                                    {% if subscription.backend_tenant_slug %}
+                                    <a href="/{{ subscription.backend_tenant_slug }}/admin/" target="_blank"
+                                       class="action-button bg-green-600 text-white hover:bg-green-700">
+                                        Access
+                                    </a>
+                                    {% endif %}
+                                    
+                                    <button onclick="viewDetails('{{ subscription.id }}')"
+                                            class="action-button bg-gray-600 text-white hover:bg-gray-700">
+                                        View
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="py-8 px-4 text-center text-gray-500">
+                                No subscriptions found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Status Modal -->
+<div id="statusModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 class="text-lg font-semibold mb-4">Processing...</h3>
+            <p id="statusMessage" class="text-gray-600 mb-4">Please wait...</p>
+            <div class="flex justify-end">
+                <button onclick="closeModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Utility functions for modal
+function showModal(title, message) {
+    document.querySelector('#statusModal h3').textContent = title;
+    document.getElementById('statusMessage').textContent = message;
+    document.getElementById('statusModal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('statusModal').classList.add('hidden');
+}
+
+// Retry backend integration
+async function retryIntegration(subscriptionId) {
+    showModal('Retrying Integration', 'Attempting to integrate with backend...');
+    
+    try {
+        const response = await fetch(`/api/subscription/${subscriptionId}/retry-integration/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showModal('Integration Successful', 'Backend integration completed successfully! The page will reload.');
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            showModal('Integration Failed', data.error || 'Unknown error occurred');
+        }
+        
+    } catch (error) {
+        showModal('Error', 'Failed to retry integration: ' + error.message);
+    }
+}
+
+// View subscription details
+async function viewDetails(subscriptionId) {
+    showModal('Loading Details', 'Fetching subscription details...');
+    
+    try {
+        const response = await fetch(`/api/subscription/${subscriptionId}/status/`);
+        const data = await response.json();
+        
+        if (data.subscription) {
+            const sub = data.subscription;
+            const backend = data.backend_integration;
+            
+            let details = `
+                <strong>Church:</strong> ${sub.church_name}<br>
+                <strong>Contact:</strong> ${sub.contact_name}<br>
+                <strong>Email:</strong> ${sub.email}<br>
+                <strong>Plan:</strong> ${sub.plan} (${sub.billing_period})<br>
+                <strong>Amount:</strong> $${sub.amount}<br>
+                <strong>Status:</strong> ${sub.status}<br>
+                <strong>Created:</strong> ${new Date(sub.created_at).toLocaleDateString()}<br>
+                <strong>Integration Status:</strong> ${backend.status}
+            `;
+            
+            if (backend.data && backend.data.login_url) {
+                details += `<br><strong>Login URL:</strong> <a href="${backend.data.login_url}" target="_blank" class="text-blue-600 underline">Access Admin</a>`;
+            }
+            
+            document.getElementById('statusMessage').innerHTML = details;
+            document.querySelector('#statusModal h3').textContent = 'Subscription Details';
+        } else {
+            showModal('Error', 'Failed to load subscription details');
+        }
+        
+    } catch (error) {
+        showModal('Error', 'Failed to load details: ' + error.message);
+    }
+}
+
+// Utility function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Auto-refresh every 30 seconds
+setInterval(() => {
+    if (!document.getElementById('statusModal').classList.contains('hidden')) {
+        return; // Don't refresh if modal is open
+    }
+    window.location.reload();
+}, 30000);
+</script>
+{% endblock %}

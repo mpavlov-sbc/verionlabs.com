@@ -171,10 +171,12 @@ class Subscription(models.Model):
     
     STATUS_CHOICES = [
         ('pending', 'Pending'),
+        ('processing', 'Processing'),
         ('active', 'Active'),
         ('cancelled', 'Cancelled'),
         ('expired', 'Expired'),
         ('suspended', 'Suspended'),
+        ('failed', 'Payment Failed'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -206,11 +208,26 @@ class Subscription(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     start_date = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
+    trial_end_date = models.DateTimeField(null=True, blank=True)
+    next_billing_date = models.DateTimeField(null=True, blank=True)
     
     # Payment information
     stripe_customer_id = models.CharField(max_length=100, blank=True)
     stripe_subscription_id = models.CharField(max_length=100, blank=True)
     stripe_payment_intent_id = models.CharField(max_length=100, blank=True)
+    stripe_payment_method_id = models.CharField(max_length=100, blank=True)
+    stripe_invoice_id = models.CharField(max_length=100, blank=True)
+    
+    # Integration with main backend
+    backend_organization_id = models.CharField(max_length=100, blank=True, help_text="Organization ID in the main church directory backend")
+    backend_tenant_slug = models.CharField(max_length=63, blank=True, help_text="Tenant slug for the organization in the main backend")
+    backend_integration_status = models.CharField(max_length=20, default='pending', choices=[
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ])
+    backend_integration_error = models.TextField(blank=True, help_text="Error message if integration failed")
     
     # Metadata
     notes = models.TextField(blank=True)
@@ -376,3 +393,107 @@ class TeamMember(models.Model):
     
     def __str__(self):
         return f"{self.name} - {self.title}"
+
+
+class PaymentIntent(models.Model):
+    """Track Stripe Payment Intents and Checkout Sessions for better payment flow management"""
+    
+    STATUS_CHOICES = [
+        # Payment Intent statuses
+        ('requires_payment_method', 'Requires Payment Method'),
+        ('requires_confirmation', 'Requires Confirmation'),
+        ('requires_action', 'Requires Action'),
+        ('processing', 'Processing'),
+        ('requires_capture', 'Requires Capture'),
+        ('canceled', 'Canceled'),
+        ('succeeded', 'Succeeded'),
+        
+        # Checkout Session statuses
+        ('pending', 'Pending'), # Checkout session created but not completed
+        ('completed', 'Completed'), # Checkout session completed successfully
+        ('expired', 'Expired'), # Checkout session expired
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    stripe_payment_intent_id = models.CharField(
+        max_length=100, 
+        unique=True,
+        help_text="Stripe Payment Intent ID or Checkout Session ID"
+    )
+    subscription = models.ForeignKey(Subscription, on_delete=models.CASCADE, related_name='payment_intents')
+    
+    # Payment details
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, default='usd')
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES)
+    
+    # Client secret for frontend (or checkout URL for sessions)
+    client_secret = models.CharField(
+        max_length=500, 
+        blank=True,
+        help_text="Payment Intent client secret or Checkout Session URL"
+    )
+    
+    # Metadata
+    stripe_metadata = models.JSONField(default=dict, blank=True)
+    last_payment_error = models.JSONField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Payment Intent"
+        verbose_name_plural = "Payment Intents"
+    
+    def __str__(self):
+        return f"Payment Intent {self.stripe_payment_intent_id} - ${self.amount} ({self.status})"
+    
+    @property
+    def is_checkout_session(self):
+        """Check if this record represents a Checkout Session rather than Payment Intent"""
+        return self.stripe_payment_intent_id.startswith('cs_')
+
+
+class WebhookEvent(models.Model):
+    """Track Stripe webhook events for debugging and audit trail"""
+    
+    EVENT_TYPES = [
+        ('payment_intent.succeeded', 'Payment Intent Succeeded'),
+        ('payment_intent.payment_failed', 'Payment Intent Failed'),
+        ('invoice.payment_succeeded', 'Invoice Payment Succeeded'),
+        ('invoice.payment_failed', 'Invoice Payment Failed'),
+        ('customer.subscription.created', 'Subscription Created'),
+        ('customer.subscription.updated', 'Subscription Updated'),
+        ('customer.subscription.deleted', 'Subscription Deleted'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    stripe_event_id = models.CharField(max_length=100, unique=True)
+    event_type = models.CharField(max_length=50)
+    processed = models.BooleanField(default=False)
+    processing_error = models.TextField(blank=True)
+    
+    # Full event data from Stripe
+    event_data = models.JSONField()
+    
+    # Related subscription if applicable
+    subscription = models.ForeignKey(
+        Subscription, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='webhook_events'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Webhook Event"
+        verbose_name_plural = "Webhook Events"
+    
+    def __str__(self):
+        status = "Processed" if self.processed else "Pending"
+        return f"{self.event_type} - {self.stripe_event_id} ({status})"

@@ -1,0 +1,98 @@
+{% extends 'church_directory/base.html' %}
+{% load static %}
+
+{% block title %}Payment Cancelled{% endblock %}
+
+{% block content %}
+<section class="section-padding">
+    <div class="container-width">
+        <div class="max-w-2xl mx-auto text-center">
+            <!-- Cancelled Icon -->
+            <div class="w-20 h-20 mx-auto mb-6 bg-yellow-100 rounded-full flex items-center justify-center">
+                <svg class="w-12 h-12 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+
+            <h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+                Payment Cancelled
+            </h1>
+            
+            <p class="text-lg text-gray-600 mb-8">
+                No worries! Your payment has been cancelled and no charges were made.
+            </p>
+
+            {% if subscription %}
+            <div class="bg-gray-50 rounded-xl p-6 mb-8 text-left">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Order Details:</h3>
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Plan:</span>
+                        <span class="font-medium">{{ subscription.pricing_tier.name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Billing:</span>
+                        <span class="font-medium">{{ subscription.billing_period|title }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Total:</span>
+                        <span class="font-medium">${{ subscription.final_amount }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="space-y-4">
+                <p class="text-gray-600">
+                    Would you like to try again or need help with your order?
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    {% if subscription %}
+                    <a href="{% url 'church_directory:checkout' %}?tier={{ subscription.pricing_tier.id }}&billing={{ subscription.billing_period }}" 
+                       class="btn-primary">
+                        Try Again
+                    </a>
+                    {% else %}
+                    <a href="{% url 'church_directory:pricing' %}" class="btn-primary">
+                        View Plans
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'church_directory:contact' %}" class="btn-secondary">
+                        Contact Support
+                    </a>
+                </div>
+            </div>
+
+            <!-- FAQ Section -->
+            <div class="mt-12 text-left">
+                <h3 class="text-xl font-semibold text-gray-900 mb-6">Common Questions</h3>
+                
+                <div class="space-y-4">
+                    <div class="bg-white border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-medium text-gray-900 mb-2">Was I charged?</h4>
+                        <p class="text-gray-600 text-sm">No, your payment was cancelled and no charges were processed.</p>
+                    </div>
+                    
+                    <div class="bg-white border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-medium text-gray-900 mb-2">Can I try a different payment method?</h4>
+                        <p class="text-gray-600 text-sm">Yes! You can try again with a different card or payment method.</p>
+                    </div>
+                    
+                    <div class="bg-white border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-medium text-gray-900 mb-2">Need help?</h4>
+                        <p class="text-gray-600 text-sm">
+                            Contact our support team at 
+                            <a href="mailto:{% if config %}{{ config.support_email }}{% else %}support@verionlabs.com{% endif %}" 
+                               class="text-blue-600 hover:underline">
+                               {% if config %}{{ config.support_email }}{% else %}support@verionlabs.com{% endif %}
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

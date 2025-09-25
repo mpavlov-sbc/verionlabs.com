@@ -208,5 +208,30 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'church_directory': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
     },
 }
+
+# Church Directory Backend API Configuration
+CHURCH_DIRECTORY_BACKEND_URL = config('CHURCH_DIRECTORY_BACKEND_URL', default='http://localhost:8001')
+CHURCH_DIRECTORY_API_KEY = config('CHURCH_DIRECTORY_API_KEY', default='24R*.Q^IW$sw1,5-(VPt[P&_K')
+
+# Backend Integration Settings
+BACKEND_INTEGRATION_ENABLED = config('BACKEND_INTEGRATION_ENABLED', default=False, cast=bool)
+BACKEND_INTEGRATION_TIMEOUT = 30  # seconds
+
+# Support Contact Information
+SUPPORT_EMAIL = config('SUPPORT_EMAIL', default='support@verionlabs.com')
+SUPPORT_PHONE = config('SUPPORT_PHONE', default='')
+
+# Error Monitoring Configuration
+ERROR_MONITORING_ENABLED = config('ERROR_MONITORING_ENABLED', default=True, cast=bool)
+SENTRY_DSN = config('SENTRY_DSN', default='')
+
+# Payment System Health Check Settings
+HEALTH_CHECK_ENABLED = config('HEALTH_CHECK_ENABLED', default=True, cast=bool)
+HEALTH_CHECK_EMAIL_ALERTS = config('HEALTH_CHECK_EMAIL_ALERTS', default=False, cast=bool)

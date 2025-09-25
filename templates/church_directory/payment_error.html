@@ -1,0 +1,297 @@
+{% extends 'church_directory/base.html' %}
+{% load static %}
+
+{% block title %}Payment Error - Church Directory{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-header {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+    
+    .error-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        animation: shake 0.5s ease-in-out;
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+    
+    .error-card {
+        border-left: 4px solid #ef4444;
+        background: #fef2f2;
+    }
+    
+    .retry-button {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        transition: all 0.3s ease;
+    }
+    
+    .retry-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+    }
+    
+    .help-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .help-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Error Header -->
+<section class="error-header text-white py-16">
+    <div class="container-width text-center">
+        <div class="error-icon">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+        </div>
+        
+        <h1 class="text-4xl lg:text-5xl font-bold mb-4">
+            Payment Error
+        </h1>
+        <p class="text-xl lg:text-2xl mb-6 opacity-90">
+            We encountered an issue processing your payment
+        </p>
+        <p class="text-lg opacity-80">
+            Don't worry - no charges were made to your card
+        </p>
+    </div>
+</section>
+
+<!-- Error Details -->
+<section class="section-padding">
+    <div class="container-width max-w-3xl">
+        <!-- Error Information -->
+        {% if error_message %}
+        <div class="error-card p-6 rounded-lg mb-8">
+            <div class="flex items-start">
+                <svg class="w-6 h-6 text-red-500 mr-3 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <h3 class="text-lg font-semibold text-red-800 mb-2">Error Details</h3>
+                    <p class="text-red-700">{{ error_message }}</p>
+                    {% if error_code %}
+                    <p class="text-sm text-red-600 mt-2">Error Code: {{ error_code }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Common Issues -->
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Common Payment Issues</h2>
+            
+            <div class="space-y-6">
+                <div class="flex items-start">
+                    <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-content center mr-4 flex-shrink-0">
+                        <span class="text-red-600 font-bold text-sm">1</span>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 mb-1">Card Declined</h3>
+                        <p class="text-gray-600 text-sm">Your bank may have declined the transaction. Try a different card or contact your bank.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-content center mr-4 flex-shrink-0">
+                        <span class="text-red-600 font-bold text-sm">2</span>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 mb-1">Insufficient Funds</h3>
+                        <p class="text-gray-600 text-sm">Your account may not have sufficient funds. Check your balance and try again.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-content center mr-4 flex-shrink-0">
+                        <span class="text-red-600 font-bold text-sm">3</span>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 mb-1">Incorrect Information</h3>
+                        <p class="text-gray-600 text-sm">Double-check your card number, expiry date, and CVC code.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-content center mr-4 flex-shrink-0">
+                        <span class="text-red-600 font-bold text-sm">4</span>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 mb-1">International Cards</h3>
+                        <p class="text-gray-600 text-sm">Some international cards may be restricted. Contact your bank to enable international transactions.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="text-center mb-8">
+            {% if payment_intent_id %}
+            <a href="{% url 'church_directory:checkout' %}?payment_intent={{ payment_intent_id }}" 
+               class="retry-button inline-flex items-center px-8 py-4 text-white font-semibold rounded-lg mr-4 mb-4">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Try Payment Again
+            </a>
+            {% else %}
+            <a href="{% url 'church_directory:checkout' %}" 
+               class="retry-button inline-flex items-center px-8 py-4 text-white font-semibold rounded-lg mr-4 mb-4">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Start Over
+            </a>
+            {% endif %}
+            
+            <a href="{% url 'church_directory:contact' %}" 
+               class="btn-secondary inline-flex items-center mb-4">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Get Help
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Help and Support -->
+<section class="section-padding bg-gray-50">
+    <div class="container-width max-w-4xl">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Need Help?</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="help-card bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Contact Support</h3>
+                <p class="text-gray-600 mb-4">
+                    Our support team is available to help resolve payment issues and answer questions.
+                </p>
+                <div class="space-y-2">
+                    <a href="mailto:{{ config.support_email|default:'support@verionlabs.com' }}" 
+                       class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                        {{ config.support_email|default:'support@verionlabs.com' }}
+                    </a>
+                    {% if config.support_phone %}
+                    <br>
+                    <a href="tel:{{ config.support_phone }}" 
+                       class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                        </svg>
+                        {{ config.support_phone }}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="help-card bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Alternative Payment Methods</h3>
+                <p class="text-gray-600 mb-4">
+                    If you continue to have issues with card payments, we accept other payment methods.
+                </p>
+                <ul class="text-sm text-gray-600 space-y-1">
+                    <li>• Different credit/debit cards</li>
+                    <li>• PayPal (if enabled)</li>
+                    <li>• Bank transfer (contact support)</li>
+                    <li>• Corporate invoicing</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="section-padding">
+    <div class="container-width max-w-3xl">
+        <h2 class="text-2xl font-bold text-gray-900 mb-8 text-center">Frequently Asked Questions</h2>
+        
+        <div class="space-y-6">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Was my card charged?</h3>
+                <p class="text-gray-600">No, if the payment failed, no charges were made to your card. You may see a temporary authorization that will disappear within 1-2 business days.</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Can I try a different card?</h3>
+                <p class="text-gray-600">Yes, you can try again with a different payment method. Click "Try Payment Again" or return to the checkout page.</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">How long should I wait before trying again?</h3>
+                <p class="text-gray-600">You can try again immediately with corrected information or a different card. If the issue persists, wait 15-30 minutes and try again.</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">What if none of my cards work?</h3>
+                <p class="text-gray-600">Contact our support team for alternative payment arrangements. We can help set up bank transfers or other payment methods.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Return to Home -->
+<section class="py-12 bg-gray-50">
+    <div class="container-width text-center">
+        <a href="{% url 'church_directory:home' %}" class="btn-outline">
+            <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Return to Homepage
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Track error for analytics
+if (typeof gtag !== 'undefined') {
+    gtag('event', 'exception', {
+        description: 'Payment Error: {{ error_message|escapejs|default:"Unknown error" }}',
+        fatal: false
+    });
+}
+
+// Auto-hide any temporary notifications after 10 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const notifications = document.querySelectorAll('.notification, .alert');
+    notifications.forEach(notification => {
+        setTimeout(() => {
+            notification.style.transition = 'opacity 0.5s ease';
+            notification.style.opacity = '0';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 500);
+        }, 10000);
+    });
+});
+
+// Prevent form resubmission on page refresh
+if (performance.navigation.type === performance.navigation.TYPE_RELOAD) {
+    window.location.replace("{% url 'church_directory:checkout' %}");
+}
+</script>
+{% endblock %}

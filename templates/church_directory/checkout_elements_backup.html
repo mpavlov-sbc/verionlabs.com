@@ -1,0 +1,649 @@
+{% extends 'church_directory/base.html' %}
+{% load static %}
+
+{% block title %}Checkout - {{ tier.name }} Plan{% endblock %}
+
+{% block extra_css %}
+<style>
+    .checkout-section {
+        margin-bottom: 2rem;
+    }
+
+    .coupon-input {
+        transition: all 0.3s ease;
+    }
+
+    .coupon-success {
+        border-color: #10b981;
+        background-color: #f0fdf4;
+    }
+
+    .coupon-error {
+        border-color: #ef4444;
+        background-color: #fef2f2;
+    }
+
+    .pricing-display {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .discount-line {
+        position: relative;
+    }
+
+    .discount-line::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: #ef4444;
+    }
+
+    #loading-overlay {
+        background: rgba(255, 255, 255, 0.9);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Checkout Header -->
+<section class="bg-gray-50 py-12">
+    <div class="container-width">
+        <div class="text-center">
+            <h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+                Complete Your Subscription
+            </h1>
+            <p class="text-lg text-gray-600">
+                You're just one step away from connecting your church community
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Checkout Content -->
+<section class="section-padding">
+    <div class="container-width">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <!-- Left Column - Form -->
+            <div class="lg:col-span-2">
+                <form method="post" id="checkout-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="submit_payment" value="1">
+
+                    <!-- Customer Information -->
+                    <div class="checkout-section">
+                        <h3 class="text-xl font-bold text-gray-900 mb-6">Church Information</h3>
+                        <div class="space-y-4">
+                            <div>
+                                {{ checkout_form.email.label_tag }}
+                                {{ checkout_form.email }}
+                                {% if checkout_form.email.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ checkout_form.email.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                {{ checkout_form.church_name.label_tag }}
+                                {{ checkout_form.church_name }}
+                                {% if checkout_form.church_name.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ checkout_form.church_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                {{ checkout_form.contact_name.label_tag }}
+                                {{ checkout_form.contact_name }}
+                                {% if checkout_form.contact_name.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ checkout_form.contact_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                {{ checkout_form.phone.label_tag }}
+                                {{ checkout_form.phone }}
+                                {% if checkout_form.phone.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ checkout_form.phone.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coupon Section -->
+                    <div class="checkout-section">
+                        <h3 class="text-xl font-bold text-gray-900 mb-6">Coupon Code</h3>
+                        <div class="flex space-x-3">
+                            {{ coupon_form.coupon_code }}
+                            <button type="submit" name="apply_coupon" id="apply-coupon-btn" 
+                                    class="px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                                Apply
+                            </button>
+                            {% if applied_coupon %}
+                            <button type="submit" name="remove_coupon" 
+                                    class="px-4 py-3 bg-gray-500 text-white font-medium rounded-lg hover:bg-gray-600 transition-colors">
+                                Remove
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% if applied_coupon %}
+                        <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <p class="text-green-800 font-medium">
+                                ✓ Coupon "{{ applied_coupon.code }}" applied successfully!
+                            </p>
+                            {% if applied_coupon.description %}
+                            <p class="text-green-600 text-sm mt-1">{{ applied_coupon.description }}</p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Terms and Conditions -->
+                    <div class="checkout-section">
+                        <div class="flex items-start">
+                            {{ checkout_form.agree_terms }}
+                            <label for="{{ checkout_form.agree_terms.id_for_label }}" class="ml-3 text-sm text-gray-600">
+                                I agree to the 
+                                <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> 
+                                and 
+                                <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a>
+                            </label>
+                        </div>
+                        {% if checkout_form.agree_terms.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ checkout_form.agree_terms.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="checkout-section">
+                        <button type="submit" id="submit-btn" 
+                                class="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-lg rounded-lg hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
+                            Complete Payment - $<span id="final-amount-btn">{{ final_amount }}</span>
+                        </button>
+                        <p class="text-center text-gray-500 text-sm mt-3">
+                            Secure checkout powered by Stripe
+                        </p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right Column - Order Summary -->
+            <div class="lg:col-span-1">
+                <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-lg sticky top-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">Order Summary</h3>
+                    
+                    <!-- Plan Details -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium text-gray-900">{{ tier.name }} Plan</span>
+                            <span class="font-bold text-gray-900">${{ base_amount }}</span>
+                        </div>
+                        <div class="text-sm text-gray-600 mb-2">
+                            <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                                {{ billing_period|title }}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-600">{{ tier.users_display }} users</p>
+                    </div>
+
+                    <!-- Coupon Discount -->
+                    {% if applied_coupon and discount_amount > 0 %}
+                    <div class="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div class="flex justify-between items-center">
+                            <span class="text-green-800 font-medium">
+                                Coupon: {{ applied_coupon.code }}
+                            </span>
+                            <span class="text-green-800 font-bold">
+                                -${{ discount_amount }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Pricing Breakdown -->
+                    <div class="border-t border-gray-200 pt-4 mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-600">Subtotal</span>
+                            <span class="text-gray-900">${{ base_amount }}</span>
+                        </div>
+                        {% if discount_amount > 0 %}
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-600">Discount</span>
+                            <span class="text-green-600">-${{ discount_amount }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="border-t border-gray-200 pt-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-bold text-gray-900">Total</span>
+                                <span class="text-lg font-bold text-gray-900" id="final-amount">
+                                    ${{ final_amount }}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">
+                                {% if billing_period == 'annual' %}per year{% else %}per month{% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Security Features -->
+                    <div class="text-center">
+                        <div class="flex justify-center items-center space-x-2 mb-3">
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                            </svg>
+                            <span class="text-sm text-gray-600 font-medium">Secure 256-bit SSL encryption</span>
+                        </div>
+                        <p class="text-xs text-gray-500">
+                            Your payment information is encrypted and secure
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+    <div class="bg-white p-8 rounded-lg shadow-xl text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p class="text-gray-600 font-medium">Processing your payment...</p>
+        <p class="text-gray-500 text-sm mt-2">Please do not close this page</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('checkout-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    
+    form.addEventListener('submit', function(e) {
+        // Check if this is the final payment submission
+        if (e.submitter && e.submitter.name === 'submit_payment') {
+            // Show loading overlay
+            loadingOverlay.classList.remove('hidden');
+            
+            // Disable form elements
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Processing...';
+            
+            // Set a timeout to re-enable if something goes wrong
+            setTimeout(function() {
+                loadingOverlay.classList.add('hidden');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Complete Payment - $' + document.getElementById('final-amount-btn').textContent;
+            }, 30000); // 30 second timeout
+        }
+    });
+    
+    // Handle coupon application with AJAX
+    const applyCouponBtn = document.getElementById('apply-coupon-btn');
+    if (applyCouponBtn) {
+        applyCouponBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const couponCode = document.querySelector('input[name="coupon_code"]').value.trim();
+            if (!couponCode) return;
+            
+            // Disable button during request
+            applyCouponBtn.disabled = true;
+            applyCouponBtn.textContent = 'Applying...';
+            
+            fetch('{% url "church_directory:apply_coupon_ajax" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    coupon_code: couponCode,
+                    tier_id: {{ tier.id }},
+                    base_amount: {{ base_amount }}
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update pricing display
+                    document.getElementById('final-amount').textContent = '$' + data.final_amount;
+                    document.getElementById('final-amount-btn').textContent = data.final_amount;
+                    
+                    // Reload page to show applied coupon
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error applying coupon:', error);
+                alert('An error occurred while applying the coupon. Please try again.');
+            })
+            .finally(() => {
+                applyCouponBtn.disabled = false;
+                applyCouponBtn.textContent = 'Apply';
+            });
+        });
+    }
+});
+</script>
+{% endblock %}
+
+                    <!-- Plan Selection -->
+                    <div class="checkout-section">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-2">Selected Plan</h2>
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-blue-900">{{ tier.name }} Plan</h3>
+                                    <p class="text-blue-700 text-sm mt-1">{{ tier.description }}</p>
+                                    <p class="text-blue-800 font-medium mt-2">{{ tier.users_display }} users</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold text-blue-900">
+                                        $<span id="display-price">{{ base_price|floatformat:0 }}</span>
+                                    </div>
+                                    <div class="text-sm text-blue-700">
+                                        /{% if billing_period == 'annual' %}year{% else %}month{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coupon Code -->
+                    <div class="checkout-section">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Coupon Code (Optional)</h2>
+                        <div class="flex space-x-4">
+                            <div class="flex-1">
+                                <input type="text" id="coupon-code" name="coupon_code"
+                                    value="{{ coupon_code|default:'' }}" placeholder="Enter coupon code"
+                                    class="coupon-input form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
+                                    style="text-transform: uppercase;">
+                                <div id="coupon-message" class="mt-2 text-sm hidden"></div>
+                            </div>
+                            <button type="button" id="apply-coupon" class="btn-secondary whitespace-nowrap">
+                                Apply
+                            </button>
+                        </div>
+                        {% if coupon %}
+                        <div class="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                        clip-rule="evenodd"></path>
+                                </svg>
+                                <div>
+                                    <p class="text-green-800 font-medium">Coupon Applied: {{ coupon.code }}</p>
+                                    <p class="text-green-700 text-sm">{{ coupon.description }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Church Information -->
+                    <div class="checkout-section">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Church Information</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="{{ form.email.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.email.label }}
+                                </label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.email.errors|first }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <label for="{{ form.church_name.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.church_name.label }}
+                                </label>
+                                {{ form.church_name }}
+                                {% if form.church_name.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.church_name.errors|first }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <label for="{{ form.contact_name.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.contact_name.label }}
+                                </label>
+                                {{ form.contact_name }}
+                                {% if form.contact_name.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.contact_name.errors|first }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <label for="{{ form.phone.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.phone.label }}
+                                </label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.phone.errors|first }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terms and Conditions -->
+                    <div class="checkout-section">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Terms & Conditions</h2>
+                        <div class="flex items-start space-x-3">
+                            {{ form.agree_terms }}
+                            <label for="{{ form.agree_terms.id_for_label }}"
+                                class="text-sm text-gray-700 leading-5">
+                                {{ form.agree_terms.label }}
+                            </label>
+                        </div>
+                        {% if form.agree_terms.errors %}
+                        <div class="text-red-600 text-sm mt-1 ml-7">{{ form.agree_terms.errors|first }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-8 border-t border-gray-200">
+                        <button type="submit" class="btn-primary w-full lg:w-auto lg:px-12">
+                            Continue to Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right Column - Order Summary -->
+            <div class="lg:col-span-1">
+                <div class="bg-gray-50 rounded-xl p-6 sticky top-8">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Order Summary</h3>
+
+                    <div class="space-y-4">
+                        <!-- Plan Details -->
+                        <div class="flex justify-between">
+                            <span class="text-gray-700">{{ tier.name }} Plan</span>
+                            <span class="font-medium text-gray-900">
+                                {% if billing_period == 'annual' %}Annual{% else %}Monthly{% endif %}
+                            </span>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <span class="text-gray-700">Users included</span>
+                            <span class="font-medium text-gray-900">{{ tier.users_display }}</span>
+                        </div>
+
+                        <hr class="border-gray-200">
+
+                        <!-- Pricing Breakdown -->
+                        <div class="flex justify-between">
+                            <span class="text-gray-700">Base price</span>
+                            <span class="font-medium text-gray-900" id="summary-base-price">
+                                ${{ base_price|floatformat:2 }}
+                            </span>
+                        </div>
+
+                        {% if discount_amount > 0 %}
+                        <div class="flex justify-between text-green-600">
+                            <span>Discount{% if coupon %} ({{ coupon.code }}){% endif %}</span>
+                            <span id="summary-discount">-${{ discount_amount|floatformat:2 }}</span>
+                        </div>
+                        {% endif %}
+
+                        <hr class="border-gray-200">
+
+                        <div class="flex justify-between text-lg font-semibold">
+                            <span class="text-gray-900">Total</span>
+                            <span class="text-gray-900" id="summary-total">
+                                ${{ final_price|floatformat:2 }}
+                            </span>
+                        </div>
+
+                        <div class="text-xs text-gray-600 mt-4">
+                            {% if billing_period == 'annual' %}
+                            Billed annually. You can cancel anytime.
+                            {% else %}
+                            Billed monthly. You can cancel anytime.
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Features Included -->
+                    <div class="mt-8">
+                        <h4 class="text-sm font-semibold text-gray-900 mb-3">What's Included:</h4>
+                        <ul class="space-y-2">
+                            {% for feature in tier.features|slice:":5" %}
+                            <li class="flex items-start text-sm text-gray-700">
+                                <svg class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor"
+                                    viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                        clip-rule="evenodd"></path>
+                                </svg>
+                                {{ feature }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <!-- Support Info -->
+                    <div class="mt-8 p-4 bg-blue-50 rounded-lg">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z">
+                                </path>
+                            </svg>
+                            <span class="text-sm text-blue-900 font-medium">Need help?</span>
+                        </div>
+                        <p class="text-sm text-blue-800 mt-1">
+                            Contact us at <a
+                                href="mailto:{% if config %}{{ config.support_email }}{% else %}support@verionlabs.com{% endif %}"
+                                class="underline">{% if config %}{{ config.support_email }}{% else %}support@verionlabs.com{% endif %}</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const couponInput = document.getElementById('coupon-code');
+        const applyButton = document.getElementById('apply-coupon');
+        const couponMessage = document.getElementById('coupon-message');
+
+        // Coupon application
+        applyButton.addEventListener('click', function () {
+            const couponCode = couponInput.value.trim().toUpperCase();
+
+            if (!couponCode) {
+                showCouponMessage('Please enter a coupon code.', 'error');
+                return;
+            }
+
+            // Show loading state
+            applyButton.disabled = true;
+            applyButton.textContent = 'Applying...';
+
+            // Make AJAX request to validate coupon
+            fetch('{% url "church_directory:validate_coupon" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    coupon_code: couponCode,
+                    tier_id: {{ tier.id }},
+                billing_period: '{{ billing_period }}'
+            })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid) {
+                showCouponMessage(data.message, 'success');
+                updatePricing(data.discount_amount, data.final_price);
+
+                // Redirect with coupon code
+                const currentUrl = new URL(window.location);
+                currentUrl.searchParams.set('coupon', couponCode);
+                window.location.href = currentUrl.toString();
+            } else {
+                showCouponMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showCouponMessage('Error validating coupon. Please try again.', 'error');
+        })
+        .finally(() => {
+            // Reset button state
+            applyButton.disabled = false;
+            applyButton.textContent = 'Apply';
+        });
+    });
+
+    // Enter key handling for coupon input
+    couponInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            applyButton.click();
+        }
+    });
+
+    function showCouponMessage(message, type) {
+        couponMessage.textContent = message;
+        couponMessage.className = `mt-2 text-sm ${type === 'success' ? 'text-green-600' : 'text-red-600'}`;
+        couponMessage.classList.remove('hidden');
+
+        // Update input styling
+        couponInput.className = `coupon-input form-input w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase ${type === 'success' ? 'coupon-success' : type === 'error' ? 'coupon-error' : 'border-gray-300'
+            }`;
+    }
+
+    function updatePricing(discountAmount, finalPrice) {
+        // Update display price in plan section
+        document.getElementById('display-price').textContent = Math.round(finalPrice);
+
+        // Update order summary
+        document.getElementById('summary-total').textContent = '$' + finalPrice.toFixed(2);
+
+        // Show discount row if not already shown
+        if (discountAmount > 0) {
+            const summaryDiscount = document.getElementById('summary-discount');
+            if (summaryDiscount) {
+                summaryDiscount.textContent = '-$' + discountAmount.toFixed(2);
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -235,7 +235,7 @@
                         {% endfor %}
                     </ul>
 
-                    <a href="{% url 'church_directory:checkout' tier.id %}"
+                    <a href="{% url 'church_directory:checkout' %}?tier={{ tier.id }}"
                         class="block w-full text-center {% if tier.is_popular %}btn-primary{% else %}btn-outline{% endif %}">
                         Get Started
                     </a>
