@@ -34,10 +34,10 @@
 <section class="bg-gray-50 section-padding">
     <div class="container-width text-center">
         <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-            Simple, Transparent Pricing
+            {{ church_config.pricing_headline }}
         </h1>
         <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-12">
-            Choose the plan that fits your congregation size. All plans include our core features with no hidden fees.
+            {{ church_config.pricing_subline }}
         </p>
 
         <!-- Billing Toggle -->
@@ -59,83 +59,63 @@
 <section class="pb-24">
     <div class="container-width">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {% for tier in tiers %}
-            <div
-                class="bg-white rounded-2xl shadow-xl border-2 {% if tier.is_popular %}border-blue-500 transform scale-105{% else %}border-gray-200{% endif %} relative overflow-hidden">
-                {% if tier.is_popular %}
-                <div class="bg-blue-500 text-white text-center py-2 text-sm font-semibold">
-                    MOST POPULAR
-                </div>
-                {% endif %}
-
-                <div class="p-8">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ tier.name }}</h3>
-                    <p class="text-gray-600 mb-6 h-16">{{ tier.description }}</p>
-
-                    <!-- Monthly Pricing -->
-                    <div class="pricing-monthly">
-                        <div class="flex items-baseline mb-2">
-                            <span class="text-4xl font-bold text-gray-900">${{ tier.monthly_price|floatformat:0 }}</span>
-                            <span class="text-gray-600 ml-2">/month</span>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-6">{{ tier.users_display }} users</p>
-                    </div>
-
-                    <!-- Annual Pricing -->
-                    <div class="pricing-annual hidden">
-                        {% if tier.annual_price %}
-                        <div class="flex items-baseline mb-2">
-                            <span class="text-4xl font-bold text-gray-900">${{ tier.annual_price|floatformat:0 }}</span>
-                            <span class="text-gray-600 ml-2">/year</span>
-                        </div>
-                        <div class="flex items-center mb-2">
-                            <span class="text-sm text-gray-500 line-through mr-2">${{ tier.monthly_price|floatformat:0 }} × 12</span>
-                            {% if tier.annual_discount_percent %}
-                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Save {{ tier.annual_discount_percent }}%</span>
-                            {% endif %}
-                        </div>
-                        <p class="text-sm text-gray-600 mb-6">{{ tier.users_display }} users</p>
-                        {% else %}
-                        <div class="flex items-baseline mb-2">
-                            <span class="text-4xl font-bold text-gray-900">${{ tier.monthly_price|floatformat:0 }}</span>
-                            <span class="text-gray-600 ml-2">/month</span>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-6">{{ tier.users_display }} users</p>
+            {% if church_featured_tiers %}
+                {% for tier in church_featured_tiers %}
+                    <div class="bg-white rounded-2xl shadow-xl border-2 {% if tier.is_popular %}border-blue-500 transform scale-105{% else %}border-gray-200{% endif %} relative overflow-hidden">
+                        {% if tier.is_popular %}
+                        <div class="bg-blue-500 text-white text-center py-2 text-sm font-semibold">MOST POPULAR</div>
                         {% endif %}
+                        <div class="p-8">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ tier.name }}</h3>
+                            <p class="text-gray-600 mb-6 h-16">{{ tier.description }}</p>
+                            <div class="pricing-monthly">
+                                <div class="flex items-baseline mb-2">
+                                    <span class="text-4xl font-bold text-gray-900">${{ tier.monthly_price|floatformat:0 }}</span>
+                                    <span class="text-gray-600 ml-2">/month</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-6">{{ tier.users_display }} users</p>
+                            </div>
+                            <div class="pricing-annual hidden">
+                                {% if tier.annual_price %}
+                                <div class="flex items-baseline mb-2">
+                                    <span class="text-4xl font-bold text-gray-900">${{ tier.annual_price|floatformat:0 }}</span>
+                                    <span class="text-gray-600 ml-2">/year</span>
+                                </div>
+                                <div class="flex items-center mb-2">
+                                    <span class="text-sm text-gray-500 line-through mr-2">${{ tier.monthly_price|floatformat:0 }} × 12</span>
+                                    {% if tier.annual_discount_percent %}
+                                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Save {{ tier.annual_discount_percent }}%</span>
+                                    {% endif %}
+                                </div>
+                                <p class="text-sm text-gray-600 mb-6">{{ tier.users_display }} users</p>
+                                {% else %}
+                                <div class="flex items-baseline mb-2">
+                                    <span class="text-4xl font-bold text-gray-900">${{ tier.monthly_price|floatformat:0 }}</span>
+                                    <span class="text-gray-600 ml-2">/month</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-6">{{ tier.users_display }} users</p>
+                                {% endif %}
+                            </div>
+                            <ul class="space-y-3 mb-8">
+                                {% for feature in tier.features %}
+                                <li class="flex items-start">
+                                    <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                                    <span class="text-gray-700 text-sm">{{ feature }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            <div class="cta-monthly">
+                                <a href="{% url 'church_directory:checkout' %}?tier={{ tier.id }}&billing=monthly" class="block w-full text-center {% if tier.is_popular %}btn-primary{% else %}btn-outline{% endif %}">Get Started Monthly</a>
+                            </div>
+                            <div class="cta-annual hidden">
+                                <a href="{% url 'church_directory:checkout' %}?tier={{ tier.id }}&billing=annual" class="block w-full text-center {% if tier.is_popular %}btn-primary{% else %}btn-outline{% endif %}">Get Started Annual</a>
+                            </div>
+                        </div>
                     </div>
-
-                    <ul class="space-y-3 mb-8">
-                        {% for feature in tier.features %}
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="currentColor"
-                                viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                    clip-rule="evenodd"></path>
-                            </svg>
-                            <span class="text-gray-700 text-sm">{{ feature }}</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-
-                    <!-- Monthly CTA -->
-                    <div class="cta-monthly">
-                        <a href="{% url 'church_directory:checkout' %}?tier={{ tier.id }}&billing=monthly"
-                            class="block w-full text-center {% if tier.is_popular %}btn-primary{% else %}btn-outline{% endif %}">
-                            Get Started Monthly
-                        </a>
-                    </div>
-
-                    <!-- Annual CTA -->
-                    <div class="cta-annual hidden">
-                        <a href="{% url 'church_directory:checkout' %}?tier={{ tier.id }}&billing=annual"
-                            class="block w-full text-center {% if tier.is_popular %}btn-primary{% else %}btn-outline{% endif %}">
-                            Get Started Annual
-                        </a>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
+                {% endfor %}
+            {% else %}
+                <p class="text-lg leading-relaxed mb-6 text-gray-400">No pricing tiers configured.</p>
+            {% endif %}
         </div>
 
         <!-- Additional Info -->
@@ -156,87 +136,37 @@
     <div class="container-width">
         <div class="text-center mb-16">
             <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-                What's Included in Every Plan
+                {{ church_config.features_headline }}
             </h2>
             <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                All plans include our core features designed specifically for churches.
+                {{ church_config.features_subline }}
             </p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div class="bg-white rounded-xl p-6 shadow-lg">
-                <div class="flex items-center mb-4">
-                    <svg class="w-8 h-8 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <h3 class="text-lg font-semibold text-gray-900">Secure & Private</h3>
-                </div>
-                <p class="text-gray-600 text-sm">End-to-end encryption, role-based access controls, and GDPR compliance
-                    to protect your member data.</p>
-            </div>
-
-            <div class="bg-white rounded-xl p-6 shadow-lg">
-                <div class="flex items-center mb-4">
-                    <svg class="w-8 h-8 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 2L3 7v11a1 1 0 001 1h3v-8a1 1 0 011-1h4a1 1 0 011 1v8h3a1 1 0 001-1V7l-7-5z">
-                        </path>
-                    </svg>
-                    <h3 class="text-lg font-semibold text-gray-900">Mobile Apps</h3>
-                </div>
-                <p class="text-gray-600 text-sm">Native iOS and Android apps with offline access, push notifications,
-                    and seamless synchronization.</p>
-            </div>
-
-            <div class="bg-white rounded-xl p-6 shadow-lg">
-                <div class="flex items-center mb-4">
-                    <svg class="w-8 h-8 text-purple-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                            d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z">
-                        </path>
-                    </svg>
-                    <h3 class="text-lg font-semibold text-gray-900">Easy Management</h3>
-                </div>
-                <p class="text-gray-600 text-sm">Intuitive admin dashboard with bulk operations, CSV imports, and
-                    automated member updates.</p>
-            </div>
-
-            <div class="bg-white rounded-xl p-6 shadow-lg">
-                <div class="flex items-center mb-4">
-                    <svg class="w-8 h-8 text-orange-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
-                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
-                    </svg>
-                    <h3 class="text-lg font-semibold text-gray-900">Communication</h3>
-                </div>
-                <p class="text-gray-600 text-sm">Send announcements, prayer requests, and group notifications directly
-                    through the app.</p>
-            </div>
-
-            <div class="bg-white rounded-xl p-6 shadow-lg">
-                <div class="flex items-center mb-4">
-                    <svg class="w-8 h-8 text-red-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z">
-                        </path>
-                    </svg>
-                    <h3 class="text-lg font-semibold text-gray-900">24/7 Support</h3>
-                </div>
-                <p class="text-gray-600 text-sm">Comprehensive help center, video tutorials, and responsive customer
-                    support team.</p>
-            </div>
-
-            <div class="bg-white rounded-xl p-6 shadow-lg">
-                <div class="flex items-center mb-4">
-                    <svg class="w-8 h-8 text-indigo-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                            d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z">
-                        </path>
-                    </svg>
-                    <h3 class="text-lg font-semibold text-gray-900">Member Photos</h3>
-                </div>
-                <p class="text-gray-600 text-sm">Upload and manage member photos to put faces to names and strengthen
-                    connections.</p>
-            </div>
+            {% if church_featured_features %}
+                {% for feature in church_featured_features %}
+                    <div class="bg-white rounded-xl p-6 shadow-lg">
+                        <div class="flex items-center mb-4">
+                            {% if feature.icon == 'users' %}
+                                <svg class="w-8 h-8 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path></svg>
+                            {% elif feature.icon == 'shield' %}
+                                <svg class="w-8 h-8 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            {% elif feature.icon == 'mobile' %}
+                                <svg class="w-8 h-8 text-red-600 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2L3 7v11a1 1 0 001 1h3v-8a1 1 0 011-1h4a1 1 0 011 1v8h3a1 1 0 001-1V7l-7-5z"></path></svg>
+                            {% elif feature.icon == 'cog' %}
+                                <svg class="w-8 h-8 text-indigo-600 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg>
+                            {% else %}
+                                <svg class="w-8 h-8 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            {% endif %}
+                            <h3 class="text-lg font-semibold text-gray-900">{{ feature.title }}</h3>
+                        </div>
+                        <p class="text-gray-600 text-sm">{{ feature.description }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-lg leading-relaxed mb-6 text-gray-400">No features configured.</p>
+            {% endif %}
         </div>
     </div>
 </section>
@@ -288,19 +218,19 @@
 <section class="section-padding gradient-bg text-white">
     <div class="container-width text-center">
         <h2 class="text-3xl lg:text-4xl font-bold mb-6">
-            Ready to Get Started?
+            {{ church_config.cta_headline }}
         </h2>
         <p class="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-            Join thousands of churches already building stronger communities with Church Directory.
+            {{ church_config.cta_subline }}
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="#pricing"
                 class="bg-white text-blue-600 hover:bg-gray-100 font-semibold py-4 px-8 rounded-lg transition-colors duration-200">
-                Choose Your Plan
+                {{ church_config.cta_button_primary }}
             </a>
             <a href="{% url 'church_directory:contact' %}"
                 class="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold py-4 px-8 rounded-lg transition-all duration-200">
-                Schedule Demo
+                {{ church_config.cta_button_secondary }}
             </a>
         </div>
     </div>

@@ -12,12 +12,10 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
                 <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-                    {% if church_config %}{{ church_config.about_headline }}{% else %}Building Stronger Church Communities{% endif %}
+                    {{ church_config.about_headline }}
                 </h1>
                 <p class="text-xl text-gray-600 mb-8">
-                    {% if church_config %}{{ church_config.about_subline }}{% else %}Church Directory was born from a simple belief: technology should bring people together, not drive
-                    them apart. We're passionate about helping churches foster genuine relationships and meaningful
-                    connections.{% endif %}
+                    {{ church_config.about_subline }}
                 </p>
                 <a href="{% url 'church_directory:contact' %}" class="btn-primary">
                     Get in Touch
@@ -49,7 +47,7 @@
         <div class="max-w-4xl mx-auto">
             <div class="text-center mb-12">
                 <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-                    {% if church_config %}{{ church_config.about_story_title }}{% else %}Our Story{% endif %}
+                    {{ church_config.about_story_title }}
                 </h2>
                 <p class="text-xl text-gray-600">
                     How we discovered the need for better church communication tools
@@ -57,32 +55,13 @@
             </div>
 
             <div class="prose prose-lg max-w-none text-gray-600">
-                {% for paragraph in church_story_paragraphs %}
-                <p class="text-lg leading-relaxed mb-6">
-                    {{ paragraph.content }}
-                </p>
-                {% empty %}
-                <!-- Default story content if none configured -->
-                <p class="text-lg leading-relaxed mb-6">
-                    Church Directory began when our founder, a longtime church member, watched his congregation struggle
-                    with outdated printed directories and scattered contact lists. Members couldn't reach each other for
-                    prayer support, ministry leaders spent hours managing group communications manually, and new
-                    families felt disconnected from the church community.
-                </p>
-
-                <p class="text-lg leading-relaxed mb-6">
-                    We realized that while there were plenty of generic contact management tools available, none were
-                    designed specifically for the unique needs of faith communities. Churches needed something that
-                    respected privacy, fostered genuine relationships, and made it easy for members to connect and
-                    support one another.
-                </p>
-
-                <p class="text-lg leading-relaxed">
-                    That's why we built Church Directory from the ground up with churches in mind. Every feature, from
-                    our security protocols to our user interface, was designed by people who understand church culture
-                    and the importance of building authentic Christian community in the digital age.
-                </p>
-                {% endfor %}
+                {% if church_story_paragraphs %}
+                    {% for paragraph in church_story_paragraphs %}
+                        <p class="text-lg leading-relaxed mb-6">{{ paragraph.content }}</p>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-lg leading-relaxed mb-6 text-gray-400">No story content configured.</p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -93,7 +72,7 @@
     <div class="container-width">
         <div class="text-center mb-16">
             <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-                {% if church_config %}{{ church_config.about_values_title }}{% else %}Our Values{% endif %}
+                {{ church_config.about_values_title }}
             </h2>
             <p class="text-xl text-gray-600 max-w-3xl mx-auto">
                 The principles that guide everything we do
@@ -101,57 +80,33 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {% for value in church_values %}
-            <div class="bg-white rounded-xl p-8 shadow-lg text-center">
-                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    {% if value.icon == 'heart' %}
-                        <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"></path>
-                        </svg>
-                    {% elif value.icon == 'shield' %}
-                        <svg class="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
-                        </svg>
-                    {% elif value.icon == 'check' %}
-                        <svg class="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    {% elif value.icon == 'users' %}
-                        <svg class="w-8 h-8 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
-                        </svg>
-                    {% elif value.icon == 'info' %}
-                        <svg class="w-8 h-8 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"></path>
-                        </svg>
-                    {% elif value.icon == 'star' %}
-                        <svg class="w-8 h-8 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                        </svg>
-                    {% else %}
-                        <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"></path>
-                        </svg>
-                    {% endif %}
-                </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-4">{{ value.title }}</h3>
-                <p class="text-gray-600">{{ value.description }}</p>
-            </div>
-            {% empty %}
-            <!-- Default values if none configured -->
-            <div class="bg-white rounded-xl p-8 shadow-lg text-center">
-                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"></path>
-                    </svg>
-                </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-4">Faith-Centered</h3>
-                <p class="text-gray-600">
-                    We understand that churches are more than organizations—they're families united by faith. Our tools
-                    reflect this understanding in every interaction.
-                </p>
-            </div>
-            {% endfor %}
+            {% if church_values %}
+                {% for value in church_values %}
+                    <div class="bg-white rounded-xl p-8 shadow-lg text-center">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            {% if value.icon == 'heart' %}
+                                <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"></path></svg>
+                            {% elif value.icon == 'shield' %}
+                                <svg class="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
+                            {% elif value.icon == 'check' %}
+                                <svg class="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            {% elif value.icon == 'users' %}
+                                <svg class="w-8 h-8 text-orange-600" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path></svg>
+                            {% elif value.icon == 'info' %}
+                                <svg class="w-8 h-8 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"></path></svg>
+                            {% elif value.icon == 'star' %}
+                                <svg class="w-8 h-8 text-indigo-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            {% else %}
+                                <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"></path></svg>
+                            {% endif %}
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">{{ value.title }}</h3>
+                        <p class="text-gray-600">{{ value.description }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-lg leading-relaxed mb-6 text-gray-400">No values configured.</p>
+            {% endif %}
         </div>
     </div>
 </section>
