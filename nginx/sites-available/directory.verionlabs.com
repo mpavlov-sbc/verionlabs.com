@@ -114,7 +114,8 @@ server {
 
 # HTTPS server (for production with SSL)
 server {
-    listen 443 ssl http2;
+    listen 443 ssl;
+    http2 on;
     server_name directory.verionlabs.com;
     
     # SSL configuration
