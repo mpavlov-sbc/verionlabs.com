@@ -2,7 +2,10 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from .models import PricingTier, Coupon, Subscription, Lead, WebsiteConfig, TeamMember
+from .models import (
+    PricingTier, Coupon, Subscription, Lead, WebsiteConfig, TeamMember,
+    Feature, Value, UseCase, AboutStoryParagraph
+)
 
 
 @admin.register(PricingTier)
@@ -197,20 +200,43 @@ class LeadAdmin(admin.ModelAdmin):
 
 @admin.register(WebsiteConfig)
 class WebsiteConfigAdmin(admin.ModelAdmin):
-    list_display = ['site_title', 'maintenance_mode', 'show_pricing', 'show_testimonials']
+    list_display = ['site_title', 'maintenance_mode', 'show_pricing', 'show_testimonials', 'show_team']
     
     fieldsets = (
-        ('Site Information', {
-            'fields': ('site_title', 'site_description', 'hero_headline', 'hero_subline')
+        ('Basic Site Information', {
+            'fields': ('site_title', 'site_description', 'company_name', 'domain')
+        }),
+        ('Hero Section', {
+            'fields': ('hero_headline', 'hero_subline', 'hero_cta_primary', 'hero_cta_secondary')
+        }),
+        ('About Page Content', {
+            'fields': ('about_headline', 'about_subline', 'about_story_title', 'about_values_title')
+        }),
+        ('Section Headlines', {
+            'fields': (
+                'features_headline', 'features_subline',
+                'pricing_headline', 'pricing_subline',
+                'use_cases_headline', 'use_cases_subline'
+            )
+        }),
+        ('Call-to-Action Section', {
+            'fields': ('cta_headline', 'cta_subline', 'cta_button_primary', 'cta_button_secondary')
         }),
         ('Contact Information', {
-            'fields': ('support_email', 'sales_email')
+            'fields': ('support_email', 'sales_email', 'phone', 'address')
         }),
         ('Feature Toggles', {
-            'fields': ('show_pricing', 'show_testimonials', 'maintenance_mode')
+            'fields': ('show_pricing', 'show_testimonials', 'show_use_cases', 'show_team', 'maintenance_mode')
         }),
-        ('App Store Links', {
-            'fields': ('app_store_url', 'google_play_url')
+        ('Social Media & App Links', {
+            'fields': ('app_store_url', 'google_play_url', 'linkedin_url', 'twitter_url', 'facebook_url')
+        }),
+        ('Footer Links', {
+            'fields': ('help_center_url', 'privacy_policy_url', 'terms_of_service_url')
+        }),
+        ('SEO Settings', {
+            'fields': ('meta_keywords',),
+            'classes': ('collapse',)
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),
@@ -269,6 +295,84 @@ class TeamMemberAdmin(admin.ModelAdmin):
         css = {
             'all': ('https://cdn.tailwindcss.com/3.3.0/tailwind.min.css',)
         }
+
+
+@admin.register(Feature)
+class FeatureAdmin(admin.ModelAdmin):
+    list_display = ['title', 'icon', 'featured_on_homepage', 'is_active', 'order']
+    list_filter = ['featured_on_homepage', 'is_active', 'icon']
+    list_editable = ['featured_on_homepage', 'is_active', 'order']
+    search_fields = ['title', 'description']
+    ordering = ['order', 'title']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'description', 'icon')
+        }),
+        ('Display Settings', {
+            'fields': ('featured_on_homepage', 'is_active', 'order')
+        })
+    )
+
+
+@admin.register(Value)
+class ValueAdmin(admin.ModelAdmin):
+    list_display = ['title', 'icon', 'is_active', 'order']
+    list_filter = ['is_active', 'icon']
+    list_editable = ['is_active', 'order']
+    search_fields = ['title', 'description']
+    ordering = ['order', 'title']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'description', 'icon')
+        }),
+        ('Display Settings', {
+            'fields': ('is_active', 'order')
+        })
+    )
+
+
+@admin.register(UseCase)
+class UseCaseAdmin(admin.ModelAdmin):
+    list_display = ['persona_name', 'persona_role', 'is_active', 'order']
+    list_filter = ['is_active']
+    list_editable = ['is_active', 'order']
+    search_fields = ['persona_name', 'persona_role', 'quote']
+    ordering = ['order', 'persona_name']
+    
+    fieldsets = (
+        ('Persona Information', {
+            'fields': ('persona_name', 'persona_role')
+        }),
+        ('Testimonial', {
+            'fields': ('quote',)
+        }),
+        ('Display Settings', {
+            'fields': ('is_active', 'order')
+        })
+    )
+
+
+@admin.register(AboutStoryParagraph)
+class AboutStoryParagraphAdmin(admin.ModelAdmin):
+    list_display = ['paragraph_preview', 'order', 'is_active']
+    list_filter = ['is_active']
+    list_editable = ['order', 'is_active']
+    ordering = ['order']
+    
+    fieldsets = (
+        ('Content', {
+            'fields': ('content',)
+        }),
+        ('Display Settings', {
+            'fields': ('order', 'is_active')
+        })
+    )
+    
+    def paragraph_preview(self, obj):
+        return f"Paragraph {obj.order}: {obj.content[:100]}..."
+    paragraph_preview.short_description = 'Preview'
 
 
 # Customize admin site header

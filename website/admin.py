@@ -27,7 +27,7 @@ class SiteConfigAdmin(admin.ModelAdmin):
             'fields': ('company_name', 'domain', 'email', 'phone', 'address')
         }),
         ('Site Content', {
-            'fields': ('description', 'mission')
+            'fields': ('description', 'mission', 'maintenance_mode')
         }),
         ('Hero Section', {
             'fields': ('hero_headline', 'hero_subheadline', 'hero_cta_text'),

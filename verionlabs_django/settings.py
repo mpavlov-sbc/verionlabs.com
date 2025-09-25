@@ -52,6 +52,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'church_directory.middleware.MaintenanceModeMiddleware',
+    'website.middleware.WebsiteMaintenanceModeMiddleware',
 ]
 
 ROOT_URLCONF = 'verionlabs_django.urls'
@@ -68,6 +70,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'website.context_processors.site_config',
+                'church_directory.context_processors.church_directory_config',
             ],
         },
     },

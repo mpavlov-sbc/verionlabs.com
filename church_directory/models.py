@@ -307,10 +307,16 @@ class Lead(models.Model):
 
 class WebsiteConfig(models.Model):
     """Configuration for the Church Directory marketing website"""
+    
+    # Basic site information
     site_title = models.CharField(max_length=200, default="Church Directory")
     site_description = models.TextField(
         default="The Complete Church Directory Solution for Modern Congregations"
     )
+    company_name = models.CharField(max_length=100, default="VerionLabs")
+    domain = models.CharField(max_length=100, default="directory.verionlabs.com")
+    
+    # Hero section
     hero_headline = models.CharField(
         max_length=200,
         default="Stay Connected with Your Church Family – Instantly & Securely"
@@ -318,19 +324,77 @@ class WebsiteConfig(models.Model):
     hero_subline = models.TextField(
         default="Secure member directories that bring congregations closer together"
     )
+    hero_cta_primary = models.CharField(max_length=50, default="Get Started Today")
+    hero_cta_secondary = models.CharField(max_length=50, default="Learn More")
+    
+    # About page content
+    about_headline = models.CharField(
+        max_length=200,
+        default="Building Stronger Church Communities"
+    )
+    about_subline = models.TextField(
+        default="Church Directory was born from a simple belief: technology should bring people together, not drive them apart. We're passionate about helping churches foster genuine relationships and meaningful connections."
+    )
+    about_story_title = models.CharField(max_length=100, default="Our Story")
+    about_values_title = models.CharField(max_length=100, default="Our Values")
+    
+    # Features section
+    features_headline = models.CharField(
+        max_length=200,
+        default="Built Specifically for Churches"
+    )
+    features_subline = models.TextField(
+        default="Every feature is designed with the unique needs, values, and privacy concerns of faith communities in mind."
+    )
+    
+    # Pricing section
+    pricing_headline = models.CharField(
+        max_length=200,
+        default="Simple, Transparent Pricing"
+    )
+    pricing_subline = models.TextField(
+        default="Choose the plan that fits your congregation size. All plans include our core features with no hidden fees."
+    )
+    
+    # Use cases section
+    use_cases_headline = models.CharField(
+        max_length=200,
+        default="See It In Action"
+    )
+    use_cases_subline = models.TextField(
+        default="Real scenarios from churches using Church Directory to strengthen their communities."
+    )
+    
+    # CTA sections
+    cta_headline = models.CharField(
+        max_length=200,
+        default="Ready to Connect Your Congregation?"
+    )
+    cta_subline = models.TextField(
+        default="Join thousands of churches already using Church Directory to build stronger communities and streamline member management."
+    )
+    cta_button_primary = models.CharField(max_length=50, default="Start Free Trial")
+    cta_button_secondary = models.CharField(max_length=50, default="Schedule Demo")
     
     # Contact information
     support_email = models.EmailField(default="support@verionlabs.com")
     sales_email = models.EmailField(default="sales@verionlabs.com")
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    address = models.TextField(blank=True)
     
     # Feature flags
     show_pricing = models.BooleanField(default=True)
     show_testimonials = models.BooleanField(default=True)
+    show_use_cases = models.BooleanField(default=True)
+    show_team = models.BooleanField(default=True)
     maintenance_mode = models.BooleanField(default=False)
     
-    # Social media links
+    # Social media and app links
     app_store_url = models.URLField(blank=True)
     google_play_url = models.URLField(blank=True)
+    linkedin_url = models.URLField(blank=True)
+    twitter_url = models.URLField(blank=True)
+    facebook_url = models.URLField(blank=True)
     
     # Footer links
     help_center_url = models.URLField(
@@ -344,6 +408,12 @@ class WebsiteConfig(models.Model):
     terms_of_service_url = models.URLField(
         blank=True,
         help_text="URL for Terms of Service page (external link)"
+    )
+    
+    # SEO Settings
+    meta_keywords = models.TextField(
+        default="church directory, member management, church software, congregation management", 
+        help_text="Comma-separated keywords"
     )
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -361,6 +431,119 @@ class WebsiteConfig(models.Model):
         if not self.pk and WebsiteConfig.objects.exists():
             raise ValueError("Only one WebsiteConfig instance is allowed")
         super().save(*args, **kwargs)
+
+
+class Feature(models.Model):
+    """Features displayed on the homepage and features page"""
+    
+    ICON_CHOICES = [
+        ('users', 'Users'),
+        ('shield', 'Shield'),
+        ('users-group', 'User Group'),
+        ('clipboard', 'Clipboard'),
+        ('mobile', 'Mobile'),
+        ('cog', 'Settings'),
+        ('chart', 'Chart'),
+        ('bell', 'Bell'),
+        ('heart', 'Heart'),
+        ('lock', 'Lock'),
+    ]
+    
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    icon = models.CharField(max_length=20, choices=ICON_CHOICES, default='users')
+    
+    # Display settings
+    featured_on_homepage = models.BooleanField(default=True, help_text="Show on homepage")
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0, help_text="Display order")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['order', 'title']
+        verbose_name = "Feature"
+        verbose_name_plural = "Features"
+        
+    def __str__(self):
+        return self.title
+
+
+class Value(models.Model):
+    """Company values displayed on the about page"""
+    
+    ICON_CHOICES = [
+        ('heart', 'Heart'),
+        ('shield', 'Shield'),
+        ('check', 'Check'),
+        ('users', 'Users'),
+        ('info', 'Info'),
+        ('star', 'Star'),
+        ('cross', 'Cross'),
+        ('hands', 'Hands'),
+    ]
+    
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    icon = models.CharField(max_length=20, choices=ICON_CHOICES, default='heart')
+    
+    # Display settings
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0, help_text="Display order")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['order', 'title']
+        verbose_name = "Value"
+        verbose_name_plural = "Values"
+        
+    def __str__(self):
+        return self.title
+
+
+class UseCase(models.Model):
+    """Use cases/testimonials displayed on the homepage"""
+    
+    persona_name = models.CharField(max_length=100, help_text="e.g., 'Pastor Mike', 'Sarah'")
+    persona_role = models.CharField(max_length=100, help_text="e.g., 'The Ministry Leader', 'The Caring Congregant'")
+    quote = models.TextField(help_text="The testimonial quote")
+    
+    # Display settings
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0, help_text="Display order")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['order', 'persona_name']
+        verbose_name = "Use Case"
+        verbose_name_plural = "Use Cases"
+        
+    def __str__(self):
+        return f"{self.persona_name} - {self.persona_role}"
+
+
+class AboutStoryParagraph(models.Model):
+    """Paragraphs for the about story section"""
+    
+    content = models.TextField()
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['order']
+        verbose_name = "About Story Paragraph"
+        verbose_name_plural = "About Story Paragraphs"
+        
+    def __str__(self):
+        return f"Story Paragraph {self.order}: {self.content[:50]}..."
 
 
 class TeamMember(models.Model):
@@ -388,6 +571,11 @@ class TeamMember(models.Model):
     
     class Meta:
         ordering = ['display_order', 'name']
+        verbose_name = "Team Member"
+        verbose_name_plural = "Team Members"
+    
+    def __str__(self):
+        return f"{self.name} - {self.title}"
         verbose_name = "Team Member"
         verbose_name_plural = "Team Members"
     

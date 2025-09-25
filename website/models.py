@@ -4,6 +4,8 @@ from django.core.validators import URLValidator, EmailValidator
 
 
 class SiteConfig(models.Model):
+    # Maintenance mode flag
+    maintenance_mode = models.BooleanField(default=False, help_text="Show maintenance page for all users except admin/staff")
     """Site-wide configuration and company information"""
     
     company_name = models.CharField(max_length=100, default="VerionLabs")
