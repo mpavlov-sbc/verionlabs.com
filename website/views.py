@@ -1,7 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import TemplateView, ListView, DetailView
 from django.contrib import messages
-from django.core.mail import send_mail
 from django.conf import settings
 from .models import SiteConfig, Service, TeamMember, Demo, ContactInquiry, NavigationItem
 from .forms import ContactForm
@@ -215,14 +214,7 @@ class ContactView(TemplateView):
             contact_inquiry.user_agent = request.META.get('HTTP_USER_AGENT', '')
             contact_inquiry.save()
             
-            # Send notification email (if configured)
-            try:
-                self.send_notification_email(contact_inquiry)
-                messages.success(request, 'Thank you for your message! We\'ll get back to you within 24 hours.')
-            except Exception as e:
-                # Log the error but still show success to user
-                messages.success(request, 'Thank you for your message! We\'ll get back to you soon.')
-            
+            messages.success(request, 'Thank you for your message! We\'ll get back to you within 24 hours.')
             return redirect('website:contact')
         else:
             context = self.get_context_data()
@@ -237,27 +229,3 @@ class ContactView(TemplateView):
         else:
             ip = request.META.get('REMOTE_ADDR')
         return ip
-    
-    def send_notification_email(self, inquiry):
-        """Send notification email to admin"""
-        subject = f'New Contact Inquiry: {inquiry.subject}'
-        message = f"""
-        New contact inquiry received:
-        
-        Name: {inquiry.full_name}
-        Email: {inquiry.email}
-        Subject: {inquiry.subject}
-        
-        Message:
-        {inquiry.message}
-        
-        ---
-        Submitted from: {inquiry.ip_address}
-        User Agent: {inquiry.user_agent}
-        Time: {inquiry.created_at}
-        """
-        
-        from_email = settings.DEFAULT_FROM_EMAIL
-        recipient_list = [settings.CONTACT_EMAIL] if hasattr(settings, 'CONTACT_EMAIL') else [settings.DEFAULT_FROM_EMAIL]
-        
-        send_mail(subject, message, from_email, recipient_list, fail_silently=False)
