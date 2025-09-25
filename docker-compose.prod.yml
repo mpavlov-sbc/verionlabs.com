@@ -10,6 +10,7 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/sites-available:/etc/nginx/sites-available
       - ./nginx/sites-available:/etc/nginx/sites-enabled
+      - ./nginx/ssl-params.conf:/etc/nginx/ssl-params.conf
       - ./staticfiles:/app/staticfiles
       - ./media:/app/media
       # For SSL certificates (uncomment in production)
