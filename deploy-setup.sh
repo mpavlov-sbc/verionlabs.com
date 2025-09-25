@@ -64,7 +64,6 @@ git clone https://github.com/mpavlov-sbc/verionlabs.com .
 
 # Set up environment files
 echo "⚙️  Setting up environment configuration..."
-cp .env.production .env.production.backup
 
 # Generate secure secret key
 DJANGO_SECRET_KEY=$(python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())')
@@ -78,6 +77,56 @@ read -p "Admin email for SSL certificates: " ADMIN_EMAIL
 read -s -p "Database password: " DB_PASSWORD
 echo ""
 
+# Create production environment file with collected information
+cat > .env.production << EOF
+# Django environment variables for PRODUCTION
+SECRET_KEY=$DJANGO_SECRET_KEY
+DEBUG=False
+ALLOWED_HOSTS=$DOMAIN_NAME,www.$DOMAIN_NAME,$DIRECTORY_DOMAIN,web,localhost,127.0.0.1
+
+# Database Configuration (PostgreSQL for Docker)
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=website_production_db
+DB_USER=website_prod_user
+DB_PASSWORD=$DB_PASSWORD
+DB_HOST=db
+DB_PORT=5432
+
+# Email settings for production
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+DEFAULT_FROM_EMAIL=noreply@$DOMAIN_NAME
+
+# Contact form recipients
+CONTACT_EMAIL_RECIPIENTS=contact@$DOMAIN_NAME
+
+# Stripe Configuration (Update with production keys)
+STRIPE_PUBLISHABLE_KEY=pk_live_your_publishable_key_here
+STRIPE_SECRET_KEY=sk_live_your_secret_key_here
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+
+# Backend Integration Configuration
+BACKEND_INTEGRATION_ENABLED=True
+CHURCH_DIRECTORY_BACKEND_URL=https://api.your-church-directory-domain.com
+CHURCH_DIRECTORY_API_KEY=your-production-api-key-change-this
+
+# Payment Processing Settings (PRODUCTION URLs)
+PAYMENT_SUCCESS_URL=https://$DOMAIN_NAME/payment-success/
+PAYMENT_CANCEL_URL=https://$DOMAIN_NAME/payment-cancel/
+
+# Security Settings
+SECURE_SSL_REDIRECT=True
+SECURE_HSTS_SECONDS=31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS=True
+SECURE_HSTS_PRELOAD=True
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
+EOF
+
 # Update nginx configuration with actual domains
 echo "🌐 Configuring nginx for your domains..."
 sed -i "s/verionlabs.com/$DOMAIN_NAME/g" nginx/sites-available/verionlabs.com
@@ -86,6 +135,11 @@ sed -i "s/www.verionlabs.com/www.$DOMAIN_NAME/g" nginx/sites-available/verionlab
 
 # Update docker-compose with actual database password
 sed -i "s/your-production-db-password/$DB_PASSWORD/g" docker-compose.prod.yml
+
+# Stop any existing nginx service that might conflict
+echo "🔧 Stopping existing nginx service (if running)..."
+sudo systemctl stop nginx 2>/dev/null || true
+sudo systemctl disable nginx 2>/dev/null || true
 
 # Start the application
 echo "🚀 Starting the application..."

@@ -11,62 +11,82 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+# Get domain names from user
+read -p "Enter your main domain (e.g., verionlabs.com): " DOMAIN_NAME
+read -p "Enter your directory subdomain (e.g., directory.verionlabs.com): " DIRECTORY_DOMAIN
+ADMIN_EMAIL="contact@verionlabs.com"
+echo "Using admin email: $ADMIN_EMAIL"
+
 # Install certbot if not already installed
 if ! command -v certbot &> /dev/null; then
     echo "Installing certbot..."
     apt-get update
-    apt-get install -y certbot python3-certbot-nginx
+    apt-get install -y certbot
 fi
 
 # Stop nginx temporarily
 echo "Stopping nginx temporarily for certificate generation..."
+cd /opt/verionlabs-website
 docker-compose -f docker-compose.prod.yml stop nginx
 
 # Generate certificates for both domains
-echo "Generating SSL certificate for verionlabs.com..."
-certbot certonly --standalone -d verionlabs.com -d www.verionlabs.com \
-    --email admin@verionlabs.com \
+echo "Generating SSL certificate for $DOMAIN_NAME..."
+certbot certonly --standalone \
+    -d $DOMAIN_NAME \
+    -d www.$DOMAIN_NAME \
+    --email $ADMIN_EMAIL \
     --agree-tos \
     --non-interactive
 
-echo "Generating SSL certificate for directory.verionlabs.com..."
-certbot certonly --standalone -d directory.verionlabs.com \
-    --email admin@verionlabs.com \
+echo "Generating SSL certificate for $DIRECTORY_DOMAIN..."
+certbot certonly --standalone \
+    -d $DIRECTORY_DOMAIN \
+    --email $ADMIN_EMAIL \
     --agree-tos \
     --non-interactive
 
-# Generate DH parameters (this may take a while)
-echo "Generating DH parameters (this may take several minutes)..."
-if [ ! -f /etc/nginx/dhparam.pem ]; then
-    openssl dhparam -out /etc/nginx/dhparam.pem 2048
-fi
+# Update docker-compose to mount SSL certificates
+echo "Updating docker-compose to mount SSL certificates..."
+sed -i '/# For SSL certificates/,/# - \/etc\/letsencrypt/ {
+    s/# - \/etc\/letsencrypt/- \/etc\/letsencrypt/
+}' docker-compose.prod.yml
 
-# Enable HTTPS configurations
+# Enable HTTPS configurations in nginx files
 echo "Enabling HTTPS configurations..."
-sed -i 's/# server {/server {/g' /app/nginx/sites-available/verionlabs.com
-sed -i 's/# }/}/g' /app/nginx/sites-available/verionlabs.com
-sed -i 's/# ssl_/ssl_/g' /app/nginx/sites-available/verionlabs.com
-sed -i 's/# include/include/g' /app/nginx/sites-available/verionlabs.com
-sed -i 's/# \.\.\./    # Copy all location blocks from HTTP version/g' /app/nginx/sites-available/verionlabs.com
+# Update nginx configs to use actual domain names and enable SSL blocks
+sed -i "s/verionlabs\.com/$DOMAIN_NAME/g" nginx/sites-available/verionlabs.com
+sed -i "s/www\.verionlabs\.com/www.$DOMAIN_NAME/g" nginx/sites-available/verionlabs.com
+sed -i "s/directory\.verionlabs\.com/$DIRECTORY_DOMAIN/g" nginx/sites-available/directory.verionlabs.com
 
-sed -i 's/# server {/server {/g' /app/nginx/sites-available/directory.verionlabs.com
-sed -i 's/# }/}/g' /app/nginx/sites-available/directory.verionlabs.com
-sed -i 's/# ssl_/ssl_/g' /app/nginx/sites-available/directory.verionlabs.com
-sed -i 's/# include/include/g' /app/nginx/sites-available/directory.verionlabs.com
-sed -i 's/# \.\.\./    # Copy all location blocks from HTTP version/g' /app/nginx/sites-available/directory.verionlabs.com
+# Uncomment SSL server blocks
+sed -i '/# HTTPS redirect (for production with SSL)/,/# }/ {
+    s/^# //
+}' nginx/sites-available/verionlabs.com
+
+sed -i '/# HTTPS redirect (for production with SSL)/,/# }/ {
+    s/^# //
+}' nginx/sites-available/directory.verionlabs.com
 
 # Set up automatic renewal
 echo "Setting up automatic certificate renewal..."
-(crontab -l 2>/dev/null; echo "0 12 * * * /usr/bin/certbot renew --quiet --deploy-hook 'docker-compose -f $(pwd)/docker-compose.prod.yml restart nginx'") | crontab -
+(crontab -l 2>/dev/null; echo "0 12 * * * /usr/bin/certbot renew --quiet --deploy-hook 'cd /opt/verionlabs-website && docker-compose -f docker-compose.prod.yml restart nginx'") | crontab -
 
-# Restart nginx
+# Restart nginx with SSL
 echo "Restarting nginx with SSL configuration..."
 docker-compose -f docker-compose.prod.yml up -d nginx
 
+# Wait a moment and check status
+sleep 5
+docker-compose -f docker-compose.prod.yml ps
+
 echo "=== SSL Setup Complete ==="
 echo "Your sites should now be available at:"
-echo "  - https://verionlabs.com"
-echo "  - https://www.verionlabs.com"
-echo "  - https://directory.verionlabs.com"
+echo "  - https://$DOMAIN_NAME"
+echo "  - https://www.$DOMAIN_NAME"
+echo "  - https://$DIRECTORY_DOMAIN"
 echo ""
 echo "Certificates will automatically renew every 12 hours via cron job."
+echo ""
+echo "To test SSL certificates:"
+echo "  curl -I https://$DOMAIN_NAME"
+echo "  curl -I https://$DIRECTORY_DOMAIN"

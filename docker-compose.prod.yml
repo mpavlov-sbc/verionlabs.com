@@ -13,7 +13,7 @@ services:
       - ./staticfiles:/app/staticfiles
       - ./media:/app/media
       # For SSL certificates (uncomment in production)
-      # - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - web
     restart: unless-stopped
