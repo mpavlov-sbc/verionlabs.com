@@ -31,6 +31,26 @@ logger = logging.getLogger(__name__)
 class StripeService:
     """Service class for Stripe payment operations"""
     
+    # Valid status transitions to prevent invalid state changes
+    VALID_STATUS_TRANSITIONS = {
+        'pending': ['processing', 'active', 'expired', 'failed', 'cancelled'],
+        'processing': ['active', 'expired', 'failed', 'cancelled'],
+        'active': ['cancelled', 'suspended'],  # Active subscriptions can only be cancelled or suspended
+        'expired': [],  # Terminal state
+        'failed': ['active'],  # Failed payments can be retried to active
+        'cancelled': [],  # Terminal state
+        'suspended': ['active', 'cancelled'],  # Suspended can be reactivated or cancelled
+    }
+    
+    @staticmethod
+    def _validate_status_transition(current_status: str, new_status: str) -> bool:
+        """Validate that a status transition is allowed"""
+        if current_status == new_status:
+            return True  # Allow same status (idempotent)
+        
+        allowed_transitions = StripeService.VALID_STATUS_TRANSITIONS.get(current_status, [])
+        return new_status in allowed_transitions
+    
     @staticmethod
     def create_customer(email: str, name: str, church_name: str, phone: str = None) -> Dict[str, Any]:
         """Create a Stripe customer"""
@@ -230,6 +250,8 @@ class StripeService:
     @staticmethod
     def handle_webhook_event(event: Dict[str, Any]) -> bool:
         """Handle a Stripe webhook event"""
+        from django.db import transaction
+        
         try:
             # Store the webhook event
             webhook_event, created = WebhookEvent.objects.get_or_create(
@@ -244,29 +266,30 @@ class StripeService:
                 logger.info(f"Webhook event {event['id']} already processed")
                 return True
             
-            # Process based on event type
-            if event['type'] == 'checkout.session.completed':
-                return StripeService._handle_checkout_session_completed(event, webhook_event)
-            elif event['type'] == 'checkout.session.expired':
-                return StripeService._handle_checkout_session_expired(event, webhook_event)
-            elif event['type'] == 'payment_intent.succeeded':
-                return StripeService._handle_payment_intent_succeeded(event, webhook_event)
-            elif event['type'] == 'payment_intent.payment_failed':
-                return StripeService._handle_payment_intent_failed(event, webhook_event)
-            elif event['type'] == 'invoice.payment_succeeded':
-                return StripeService._handle_invoice_payment_succeeded(event, webhook_event)
-            elif event['type'] == 'invoice.payment_failed':
-                return StripeService._handle_invoice_payment_failed(event, webhook_event)
-            elif event['type'] == 'customer.subscription.updated':
-                return StripeService._handle_subscription_updated(event, webhook_event)
-            elif event['type'] == 'customer.subscription.deleted':
-                return StripeService._handle_subscription_deleted(event, webhook_event)
-            else:
-                logger.info(f"Unhandled webhook event type: {event['type']}")
-                webhook_event.processed = True
-                webhook_event.processed_at = timezone.now()
-                webhook_event.save()
-                return True
+            # Process based on event type with transaction
+            with transaction.atomic():
+                if event['type'] == 'checkout.session.completed':
+                    return StripeService._handle_checkout_session_completed(event, webhook_event)
+                elif event['type'] == 'checkout.session.expired':
+                    return StripeService._handle_checkout_session_expired(event, webhook_event)
+                elif event['type'] == 'payment_intent.succeeded':
+                    return StripeService._handle_payment_intent_succeeded(event, webhook_event)
+                elif event['type'] == 'payment_intent.payment_failed':
+                    return StripeService._handle_payment_intent_failed(event, webhook_event)
+                elif event['type'] == 'invoice.payment_succeeded':
+                    return StripeService._handle_invoice_payment_succeeded(event, webhook_event)
+                elif event['type'] == 'invoice.payment_failed':
+                    return StripeService._handle_invoice_payment_failed(event, webhook_event)
+                elif event['type'] == 'customer.subscription.updated':
+                    return StripeService._handle_subscription_updated(event, webhook_event)
+                elif event['type'] == 'customer.subscription.deleted':
+                    return StripeService._handle_subscription_deleted(event, webhook_event)
+                else:
+                    logger.info(f"Unhandled webhook event type: {event['type']}")
+                    webhook_event.processed = True
+                    webhook_event.processed_at = timezone.now()
+                    webhook_event.save()
+                    return True
                 
         except Exception as e:
             logger.error(f"Error processing webhook event {event['id']}: {e}")
@@ -288,22 +311,41 @@ class StripeService:
                 try:
                     subscription = Subscription.objects.get(id=subscription_id)
                     
+                    # Idempotency check: Don't reprocess if already active
+                    if subscription.status == 'active' and subscription.start_date:
+                        logger.info(f"Subscription {subscription_id} already activated, skipping duplicate processing")
+                        webhook_event.processed = True
+                        webhook_event.processed_at = timezone.now()
+                        webhook_event.save()
+                        return True
+                    
+                    # Validate status transition
+                    if not StripeService._validate_status_transition(subscription.status, 'active'):
+                        logger.warning(f"Invalid status transition for subscription {subscription_id}: {subscription.status} -> active")
+                        webhook_event.processed = True
+                        webhook_event.processed_at = timezone.now()
+                        webhook_event.save()
+                        return True
+                    
+                    # Use consistent timestamp for all date calculations
+                    activation_time = timezone.now()
+                    
                     # Update subscription with Stripe customer info
                     if checkout_session.get('customer'):
                         subscription.stripe_customer_id = checkout_session['customer']
                     
                     # Update subscription status
                     subscription.status = 'active'
-                    subscription.start_date = timezone.now()
+                    subscription.start_date = activation_time
                     
                     # Set end date based on billing period
                     if subscription.billing_period == 'annual':
                         from dateutil.relativedelta import relativedelta
-                        subscription.end_date = subscription.start_date + relativedelta(years=1)
+                        subscription.end_date = activation_time + relativedelta(years=1)
                         subscription.next_billing_date = subscription.end_date
                     else:
                         from dateutil.relativedelta import relativedelta
-                        subscription.end_date = subscription.start_date + relativedelta(months=1)
+                        subscription.end_date = activation_time + relativedelta(months=1)
                         subscription.next_billing_date = subscription.end_date
                     
                     # Store payment intent ID if available
@@ -323,8 +365,9 @@ class StripeService:
                     except PaymentIntent.DoesNotExist:
                         logger.warning(f"Local PaymentIntent record not found for checkout session {session_id}")
                     
-                    # Integrate with backend API to create organization
-                    if getattr(settings, 'BACKEND_INTEGRATION_ENABLED', True):
+                    # Integrate with backend API to create organization (only if not already done)
+                    if (getattr(settings, 'BACKEND_INTEGRATION_ENABLED', True) and 
+                        subscription.backend_integration_status != 'completed'):
                         try:
                             backend_api = BackendApiService()
                             success, response_data = backend_api.create_organization(subscription)
@@ -409,18 +452,38 @@ class StripeService:
             if subscription_id:
                 try:
                     subscription = Subscription.objects.get(id=subscription_id)
+                    
+                    # Idempotency check: Don't reprocess if already active
+                    if subscription.status == 'active' and subscription.start_date:
+                        logger.info(f"Subscription {subscription_id} already activated, skipping duplicate processing")
+                        webhook_event.processed = True
+                        webhook_event.processed_at = timezone.now()
+                        webhook_event.save()
+                        return True
+                    
+                    # Only process if subscription is in pending/processing state
+                    if subscription.status not in ['pending', 'processing']:
+                        logger.warning(f"Subscription {subscription_id} in unexpected state {subscription.status} for payment success")
+                        webhook_event.processed = True
+                        webhook_event.processed_at = timezone.now()
+                        webhook_event.save()
+                        return True
+                    
+                    # Use consistent timestamp for all date calculations
+                    activation_time = timezone.now()
+                    
                     subscription.stripe_payment_intent_id = payment_intent_id
                     subscription.status = 'active'
-                    subscription.start_date = timezone.now()
+                    subscription.start_date = activation_time
                     
                     # Set end date based on billing period
                     if subscription.billing_period == 'annual':
                         from dateutil.relativedelta import relativedelta
-                        subscription.end_date = subscription.start_date + relativedelta(years=1)
+                        subscription.end_date = activation_time + relativedelta(years=1)
                         subscription.next_billing_date = subscription.end_date
                     else:
                         from dateutil.relativedelta import relativedelta
-                        subscription.end_date = subscription.start_date + relativedelta(months=1)
+                        subscription.end_date = activation_time + relativedelta(months=1)
                         subscription.next_billing_date = subscription.end_date
                     
                     subscription.save()
@@ -429,8 +492,9 @@ class StripeService:
                     
                     logger.info(f"Activated subscription {subscription_id} from payment intent {payment_intent_id}")
                     
-                    # Integrate with backend API to create organization
-                    if getattr(settings, 'BACKEND_INTEGRATION_ENABLED', True):
+                    # Integrate with backend API to create organization (only if not already done)
+                    if (getattr(settings, 'BACKEND_INTEGRATION_ENABLED', True) and 
+                        subscription.backend_integration_status != 'completed'):
                         try:
                             backend_api = BackendApiService()
                             success, response_data = backend_api.create_organization(subscription)

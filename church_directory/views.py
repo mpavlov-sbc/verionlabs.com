@@ -501,6 +501,12 @@ def stripe_webhook(request):
     if request.method != 'POST':
         return HttpResponse(status=405)
     
+    # Validate webhook origin for additional security
+    user_agent = request.META.get('HTTP_USER_AGENT', '')
+    if not user_agent.startswith('Stripe/'):
+        logger.warning(f'Invalid webhook user agent: {user_agent}')
+        return HttpResponse(status=400)
+    
     payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
     

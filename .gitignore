@@ -1,6 +1,4 @@
-# Nuxt dev/build outputs
 .output
-.nuxt
 .nitro
 .cache
 dist
@@ -13,8 +11,6 @@ venv/
 */node_modules/**
 
 */.output/**
-
-**/.nuxt/**
 
 # Logs
 *.log*

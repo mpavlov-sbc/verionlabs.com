@@ -69,6 +69,15 @@ class BackendApiService:
     def create_organization(self, subscription: Subscription) -> Tuple[bool, Dict[str, Any]]:
         """Create a new organization in the main backend"""
         
+        # Check if organization already exists for this subscription
+        if subscription.backend_integration_status == 'completed':
+            logger.info(f"Organization already created for subscription {subscription.id}")
+            return True, {
+                'organization_id': subscription.backend_organization_id,
+                'tenant_slug': subscription.backend_tenant_slug,
+                'message': 'Organization already exists'
+            }
+        
         # Prepare organization data
         organization_data = {
             'name': subscription.church_name,
@@ -159,11 +168,40 @@ class BackendApiService:
         
         return success, response_data
 
+    
+    # TODO: Add automation on a server to retry failed subscriptiosn and add monitoring for such
 
-class BackendApiError(Exception):
-    """Exception for backend API errors"""
-    def __init__(self, message: str, status_code: Optional[int] = None, response_data: Optional[Dict] = None):
-        self.message = message
-        self.status_code = status_code
-        self.response_data = response_data or {}
-        super().__init__(message)
+    def retry_failed_integrations(self) -> Dict[str, int]:
+        """Retry backend integration for all failed subscriptions"""
+        from .models import Subscription
+        
+        failed_subscriptions = Subscription.objects.filter(
+            backend_integration_status='failed',
+            status='active' 
+        )
+        
+        results = {'successful': 0, 'failed': 0, 'skipped': 0}
+        
+        for subscription in failed_subscriptions:
+            try:
+                logger.info(f"Retrying backend integration for subscription {subscription.id}")
+                
+                # Reset status to allow retry
+                subscription.backend_integration_status = 'pending'
+                subscription.save()
+                
+                success, response_data = self.create_organization(subscription)
+                
+                if success:
+                    results['successful'] += 1
+                    logger.info(f"Successfully retried backend integration for subscription {subscription.id}")
+                else:
+                    results['failed'] += 1
+                    logger.error(f"Failed to retry backend integration for subscription {subscription.id}: {response_data}")
+                    
+            except Exception as e:
+                results['failed'] += 1
+                logger.error(f"Exception during retry for subscription {subscription.id}: {e}")
+        
+        logger.info(f"Backend integration retry completed: {results}")
+        return results
