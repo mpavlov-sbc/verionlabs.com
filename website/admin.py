@@ -2,7 +2,8 @@ from django.contrib import admin
 from django.utils.html import format_html
 from .models import (
     SiteConfig, StoryParagraph, Service, ServiceTechnology, 
-    TeamMember, Demo, DemoTag, ContactInquiry, NavigationItem, DevelopmentBanner
+    TeamMember, Demo, DemoTag, ContactInquiry, NavigationItem, DevelopmentBanner,
+    BlogPost, BlogTag, StaticPage
 )
 
 
@@ -148,11 +149,38 @@ class DemoTagInline(admin.TabularInline):
     ordering = ['order']
 
 
+class BlogTagInline(admin.TabularInline):
+    """Inline editor for blog tags"""
+    model = BlogPost.tags.through
+    extra = 1
+    autocomplete_fields = ['blogtag']
+
+
+@admin.register(BlogTag)
+class BlogTagAdmin(admin.ModelAdmin):
+    """Admin interface for blog tags"""
+    
+    list_display = ['name', 'slug', 'order']
+    list_editable = ['order']
+    search_fields = ['name', 'description']
+    prepopulated_fields = {'slug': ('name',)}
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('name', 'slug', 'description')
+        }),
+        ('Display Settings', {
+            'fields': ('order',)
+        }),
+    )
+
+
 @admin.register(Demo)
 class DemoAdmin(admin.ModelAdmin):
     """Admin interface for demos"""
     
-    list_display = ['title', 'featured', 'order', 'live_demo_url', 'github_url']
+    list_display = ['title', 'featured', 'order', 'live_demo_url', 'github_url'
+]
     list_filter = ['featured']
     list_editable = ['featured', 'order']
     search_fields = ['title', 'description']
@@ -190,7 +218,8 @@ class DemoAdmin(admin.ModelAdmin):
 class ContactInquiryAdmin(admin.ModelAdmin):
     """Admin interface for contact inquiries"""
     
-    list_display = ['full_name', 'email', 'subject', 'status', 'priority', 'created_at']
+    list_display = ['full_name', 'email', 'subject', 'status', 'priority', 'created_at'
+]
     list_filter = ['status', 'priority', 'created_at']
     search_fields = ['full_name', 'email', 'subject', 'message']
     readonly_fields = ['full_name', 'email', 'subject', 'message', 'ip_address', 'user_agent', 'created_at', 'updated_at']
@@ -264,6 +293,80 @@ class DevelopmentBannerAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         # Only allow one banner instance
         return not DevelopmentBanner.objects.exists()
+
+
+@admin.register(BlogPost)
+class BlogPostAdmin(admin.ModelAdmin):
+    """Admin interface for blog posts"""
+    
+    list_display = ['title', 'author_name', 'is_published', 'featured', 'publish_date']
+    list_filter = ['is_published', 'featured', 'publish_date', 'author_name']
+    list_editable = ['is_published', 'featured']
+    search_fields = ['title', 'content', 'excerpt', 'author_name']
+    prepopulated_fields = {'slug': ('title',)}
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'slug', 'excerpt', 'content')
+        }),
+        ('Author Information', {
+            'fields': ('author_name', 'author_bio')
+        }),
+        ('Images', {
+            'fields': ('featured_image', 'featured_image_url'),
+            'description': 'Upload an image or provide an external URL. Uploaded image takes priority.'
+        }),
+        ('Publishing', {
+            'fields': ('is_published',)
+        }),
+        ('Display Settings', {
+            'fields': ('featured', 'order', 'tags')
+        }),
+        ('SEO', {
+            'fields': ('meta_description', 'meta_keywords'),
+            'classes': ['collapse']
+        }),
+        ('Timestamps', {
+            'fields': ('updated_at',),
+            'classes': ['collapse']
+        }),
+    )
+    
+    readonly_fields = ['updated_at']
+    
+    def get_queryset(self, request):
+        # Show all posts to admins, but order by publish_date
+        return super().get_queryset(request).order_by('-publish_date')
+
+
+@admin.register(StaticPage)
+class StaticPageAdmin(admin.ModelAdmin):
+    """Admin interface for static pages"""
+    
+    list_display = ['title', 'slug', 'is_active']
+    list_filter = ['is_active']
+    list_editable = ['is_active']
+    search_fields = ['title', 'content']
+    prepopulated_fields = {'slug': ('title',)}
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'slug', 'content')
+        }),
+        ('Display Settings', {
+            'fields': ('is_active',)
+        }),
+        ('SEO', {
+            'fields': ('meta_description', 'meta_keywords'),
+            'classes': ['collapse']
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ['collapse']
+        }),
+    )
+    
+    readonly_fields = ['created_at', 'updated_at']
 
 
 # Customize admin site header and title

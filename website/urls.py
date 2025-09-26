@@ -12,4 +12,12 @@ urlpatterns = [
     path('demos/', views.DemosView.as_view(), name='demos'),
     path('demos/<slug:slug>/', views.DemoDetailView.as_view(), name='demo_detail'),
     path('contact/', views.ContactView.as_view(), name='contact'),
+    
+    # Blog pages
+    path('blog/', views.BlogListView.as_view(), name='blog'),
+    path('blog/<slug:slug>/', views.BlogDetailView.as_view(), name='blog_detail'),
+    path('blog/topic/<slug:slug>/', views.BlogTopicView.as_view(), name='blog_topic'),
+    
+    # Static pages
+    path('page/<slug:slug>/', views.StaticPageView.as_view(), name='static_page'),
 ]

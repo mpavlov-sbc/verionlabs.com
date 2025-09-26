@@ -2,7 +2,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import TemplateView, ListView, DetailView
 from django.contrib import messages
 from django.conf import settings
-from .models import SiteConfig, Service, TeamMember, Demo, ContactInquiry, NavigationItem
+from django.db import models
+from .models import SiteConfig, Service, TeamMember, Demo, ContactInquiry, NavigationItem, BlogPost, BlogTag, StaticPage
 from .forms import ContactForm
 
 
@@ -229,3 +230,103 @@ class ContactView(TemplateView):
         else:
             ip = request.META.get('REMOTE_ADDR')
         return ip
+
+
+class BlogListView(ListView):
+    """View for listing blog posts"""
+    model = BlogPost
+    template_name = 'website/blog.html'
+    context_object_name = 'blog_posts'
+    paginate_by = 9
+    
+    def get_queryset(self):
+        # Only show published posts
+        return BlogPost.objects.filter(is_published=True)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(get_site_context())
+        
+        # Get featured posts for sidebar/highlight
+        context['featured_posts'] = BlogPost.objects.filter(
+            is_published=True, 
+            featured=True
+        ).order_by('-publish_date')[:3]
+        
+        # Get topics/tags with post counts
+        context['blog_topics'] = BlogTag.objects.annotate(
+            post_count=models.Count('blog_posts', filter=models.Q(blog_posts__is_published=True))
+        ).filter(post_count__gt=0).order_by('-post_count', 'order')
+        
+        return context
+
+
+class BlogDetailView(DetailView):
+    """View for individual blog post"""
+    model = BlogPost
+    template_name = 'website/blog_detail.html'
+    context_object_name = 'post'
+    
+    def get_queryset(self):
+        # Only show published posts
+        return BlogPost.objects.filter(is_published=True)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(get_site_context())
+        
+        # Get related posts (other featured posts, excluding current)
+        context['related_posts'] = BlogPost.objects.filter(
+            is_published=True, 
+            featured=True
+        ).exclude(id=self.object.id).order_by('-publish_date')[:3]
+        
+        return context
+
+
+class BlogTopicView(ListView):
+    """View for listing blog posts by topic/tag"""
+    model = BlogPost
+    template_name = 'website/blog.html'
+    context_object_name = 'blog_posts'
+    paginate_by = 9
+    
+    def get_queryset(self):
+        # Get the tag by slug
+        self.tag = get_object_or_404(BlogTag, slug=self.kwargs['slug'])
+        # Only show published posts with this tag
+        return BlogPost.objects.filter(
+            is_published=True, 
+            tags=self.tag
+        )
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(get_site_context())
+        
+        # Set the current tag
+        context['current_tag'] = self.tag
+        
+        # Get featured posts for sidebar/highlight
+        context['featured_posts'] = BlogPost.objects.filter(
+            is_published=True, 
+            featured=True
+        ).order_by('-publish_date')[:3]
+        
+        # Get topics/tags with post counts
+        context['blog_topics'] = BlogTag.objects.annotate(
+            post_count=models.Count('blog_posts', filter=models.Q(blog_posts__is_published=True))
+        ).filter(post_count__gt=0).order_by('-post_count', 'order')
+        
+        return context
+
+
+class StaticPageView(DetailView):
+    """View for static pages like Privacy Policy, Terms of Service"""
+    model = StaticPage
+    template_name = 'website/static_page.html'
+    context_object_name = 'page'
+    
+    def get_queryset(self):
+        # Only show active pages
+        return StaticPage.objects.filter(is_active=True)

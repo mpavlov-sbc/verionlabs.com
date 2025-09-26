@@ -126,7 +126,7 @@ class Service(models.Model):
         return self.title
     
     def get_absolute_url(self):
-        return reverse('service_detail', kwargs={'slug': self.slug})
+        return reverse('website:service_detail', kwargs={'slug': self.slug})
 
 
 class ServiceTechnology(models.Model):
@@ -208,7 +208,7 @@ class Demo(models.Model):
         return self.title
     
     def get_absolute_url(self):
-        return reverse('demo_detail', kwargs={'slug': self.slug})
+        return reverse('website:demo_detail', kwargs={'slug': self.slug})
     
     def get_image_url(self):
         """Return image URL, preferring uploaded image over external URL"""
@@ -279,7 +279,7 @@ class NavigationItem(models.Model):
     """Dynamic navigation menu items"""
     
     name = models.CharField(max_length=50)
-    url = models.CharField(max_length=200, help_text="URL path or external URL")
+    url = models.CharField(max_length=200, help_text="URL path (e.g., '/services/') or external URL")
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     is_external = models.BooleanField(default=False, help_text="Is this an external link?")
@@ -330,3 +330,135 @@ class DevelopmentBanner(models.Model):
         if not self.pk and DevelopmentBanner.objects.exists():
             raise ValueError("Only one DevelopmentBanner instance is allowed")
         super().save(*args, **kwargs)
+
+
+class BlogPost(models.Model):
+    """Blog posts for the company website"""
+    
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True, help_text="URL slug for this blog post")
+    excerpt = models.TextField(
+        max_length=300,
+        help_text="Short summary for blog listing (max 300 characters)"
+    )
+    content = models.TextField(help_text="Full blog post content (supports HTML)")
+    
+    # Author information
+    author_name = models.CharField(max_length=100, default="VerionLabs Team")
+    author_bio = models.TextField(blank=True, help_text="Optional author bio")
+    
+    # Images
+    featured_image = models.ImageField(
+        upload_to='blog/',
+        blank=True,
+        null=True,
+        help_text="Featured image for the blog post"
+    )
+    featured_image_url = models.URLField(
+        blank=True,
+        null=True,
+        help_text="External image URL if not uploading"
+    )
+    
+    # Publishing
+    is_published = models.BooleanField(default=False, help_text="Publish this blog post")
+    publish_date = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # SEO
+    meta_description = models.TextField(
+        blank=True,
+        help_text="Meta description for SEO (recommended 150-160 characters)"
+    )
+    meta_keywords = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Comma-separated keywords for SEO"
+    )
+    
+    # Display settings
+    featured = models.BooleanField(default=False, help_text="Feature this post on homepage")
+    order = models.PositiveIntegerField(default=0, help_text="Display order for featured posts")
+    tags = models.ManyToManyField('BlogTag', blank=True, related_name='blog_posts', help_text="Tags for categorizing this post")
+    
+    class Meta:
+        ordering = ['-publish_date']
+        verbose_name = "Blog Post"
+        verbose_name_plural = "Blog Posts"
+        
+    def __str__(self):
+        return self.title
+    
+    def get_absolute_url(self):
+        return reverse('website:blog_detail', kwargs={'slug': self.slug})
+    
+    def get_featured_image_url(self):
+        """Return featured image URL, preferring uploaded image over external URL"""
+        if self.featured_image:
+            return self.featured_image.url
+        return self.featured_image_url
+    
+    def get_excerpt(self):
+        """Return excerpt, falling back to truncated content if not set"""
+        if self.excerpt:
+            return self.excerpt
+        # Return first 200 characters of content, stripped of HTML
+        import re
+        clean_content = re.sub(r'<[^>]+>', '', self.content)
+        return clean_content[:200] + '...' if len(clean_content) > 200 else clean_content
+
+
+class BlogTag(models.Model):
+    """Tags for categorizing blog posts"""
+
+    name = models.CharField(max_length=50, unique=True)
+    slug = models.SlugField(unique=True, help_text="URL slug for this tag")
+    description = models.TextField(blank=True, help_text="Optional description for this tag")
+    order = models.PositiveIntegerField(default=0, help_text="Display order")
+
+    class Meta:
+        ordering = ['order', 'name']
+        verbose_name = "Blog Tag"
+        verbose_name_plural = "Blog Tags"
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('website:blog_topic', kwargs={'slug': self.slug})
+
+
+class StaticPage(models.Model):
+    """Static pages like Privacy Policy, Terms of Service, Help Center"""
+    
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True, help_text="URL slug for this page")
+    content = models.TextField(help_text="Page content (supports HTML)")
+    
+    # SEO
+    meta_description = models.TextField(
+        blank=True,
+        help_text="Meta description for SEO"
+    )
+    meta_keywords = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Comma-separated keywords for SEO"
+    )
+    
+    # Display settings
+    is_active = models.BooleanField(default=True, help_text="Make this page accessible")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['title']
+        verbose_name = "Static Page"
+        verbose_name_plural = "Static Pages"
+        
+    def __str__(self):
+        return self.title
+    
+    def get_absolute_url(self):
+        return reverse('website:static_page', kwargs={'slug': self.slug})

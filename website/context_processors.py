@@ -1,4 +1,4 @@
-from .models import SiteConfig, NavigationItem, DevelopmentBanner
+from .models import SiteConfig, NavigationItem, DevelopmentBanner, StaticPage
 
 
 def site_config(request):
