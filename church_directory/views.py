@@ -199,9 +199,6 @@ def checkout(request):
             # Clear the token after use
             request.session.pop('checkout_submission_token', None)
             
-            # Log the submission attempt for debugging
-            logger.info(f"Payment submission attempt for email: {form.cleaned_data.get('email', 'unknown')}")
-            
             checkout_form = CheckoutForm(request.POST)
             if checkout_form.is_valid():
                 return _process_checkout(request, checkout_form, tier, billing_period, applied_coupon, base_amount, discount_amount, final_amount)
