@@ -55,7 +55,7 @@ server {
     location /directory/api/ {
         limit_req zone=api burst=50 nodelay;
         
-        proxy_pass http://django_web;
+        proxy_pass http://django_web/directory/api$request_uri;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -75,7 +75,7 @@ server {
     # Webhook endpoints (no rate limiting for legitimate webhooks)
     location /directory/webhooks/ {
         # Allow Stripe webhooks
-        proxy_pass http://django_web;
+        proxy_pass http://django_web/directory/webhooks$request_uri;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -90,7 +90,7 @@ server {
     # Main directory application
     location / {
         
-        proxy_pass http://django_web;
+        proxy_pass http://django_web/directory$request_uri;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
