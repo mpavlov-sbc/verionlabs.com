@@ -187,14 +187,14 @@ def checkout(request):
             messages.info(request, 'Coupon removed.')
         
         elif 'submit_payment' in request.POST:
-            # TEMPORARILY DISABLE TOKEN CHECK FOR DEBUGGING
-            # submitted_token = request.POST.get('submission_token')
-            # session_token = request.session.get('checkout_submission_token')
+            # Check submission token to prevent duplicate submissions
+            submitted_token = request.POST.get('submission_token')
+            session_token = request.session.get('checkout_submission_token')
             
-            # if not submitted_token or submitted_token != session_token:
-            #     logger.warning(f"Invalid or missing submission token for checkout attempt")
-            #     messages.error(request, 'Form submission error. Please try again.')
-            #     return redirect('church_directory:checkout')
+            if not submitted_token or submitted_token != session_token:
+                logger.warning(f"Invalid or missing submission token for checkout attempt")
+                messages.error(request, 'Form submission error. Please try again.')
+                return redirect('church_directory:checkout')
             
             # Clear the token after use
             request.session.pop('checkout_submission_token', None)
@@ -238,8 +238,8 @@ def _process_checkout(request, form, tier, billing_period, coupon, base_amount, 
                 request, 
                 'You already have an active subscription. Please cancel your existing subscription before purchasing a new one, or contact support if you need assistance.'
             )
-            # Use GET redirect to prevent browser resubmission on refresh
-            return redirect('church_directory:checkout')  # Remove query params to avoid confusion
+            checkout_url = reverse('church_directory:checkout') + f'?tier={tier.id}&billing={billing_period}'
+            return HttpResponseRedirect(checkout_url)
         
         # Create subscription record
         subscription = Subscription.objects.create(
@@ -313,14 +313,14 @@ def _process_checkout(request, form, tier, billing_period, coupon, base_amount, 
                 coupon.save()
             
             messages.error(request, 'Payment processing failed. Please try again.')
-            # Use GET redirect to prevent browser resubmission on refresh
-            return redirect('church_directory:checkout')
+            checkout_url = reverse('church_directory:checkout') + f'?tier={tier.id}&billing={billing_period}'
+            return HttpResponseRedirect(checkout_url)
     
     except Exception as e:
         logger.error(f"Unexpected error during checkout processing: {e}")
         messages.error(request, 'An unexpected error occurred. Please try again.')
-        # Use GET redirect to prevent browser resubmission on refresh
-        return redirect('church_directory:checkout')
+        checkout_url = reverse('church_directory:checkout') + f'?tier={tier.id}&billing={billing_period}'
+        return HttpResponseRedirect(checkout_url)
 
 
 # PaymentProcessView is no longer needed with Stripe Checkout
