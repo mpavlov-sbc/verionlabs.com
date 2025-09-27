@@ -621,7 +621,6 @@ body {
     border-radius: 0.375rem;
 }
 
-/* Section color updates to match Nuxt.js slate theme */
 section h2 {
     color: var(--primary-800);
 }
