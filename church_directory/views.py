@@ -12,7 +12,6 @@ from decimal import Decimal
 import json
 import uuid
 import logging
-from datetime import timedelta
 import stripe
 
 from .models import PricingTier, Coupon, Subscription, Lead, WebsiteConfig, PaymentIntent
@@ -147,11 +146,6 @@ def checkout(request):
     checkout_form = CheckoutForm()
     coupon_form = CouponForm()
     
-    # Generate a unique submission token to prevent duplicate submissions
-    import uuid
-    submission_token = str(uuid.uuid4())
-    request.session['checkout_submission_token'] = submission_token
-    
     # Handle coupon application
     applied_coupon = None
     discount_amount = Decimal('0.00')
@@ -187,18 +181,6 @@ def checkout(request):
             messages.info(request, 'Coupon removed.')
         
         elif 'submit_payment' in request.POST:
-            # Check submission token to prevent duplicate submissions
-            submitted_token = request.POST.get('submission_token')
-            session_token = request.session.get('checkout_submission_token')
-            
-            if not submitted_token or submitted_token != session_token:
-                logger.warning(f"Invalid or missing submission token for checkout attempt")
-                messages.error(request, 'Form submission error. Please try again.')
-                return redirect('church_directory:checkout')
-            
-            # Clear the token after use
-            request.session.pop('checkout_submission_token', None)
-            
             checkout_form = CheckoutForm(request.POST)
             if checkout_form.is_valid():
                 return _process_checkout(request, checkout_form, tier, billing_period, applied_coupon, base_amount, discount_amount, final_amount)
@@ -214,7 +196,6 @@ def checkout(request):
         'coupon_form': coupon_form,
         'config': config,
         'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY,
-        'submission_token': submission_token,
         'page_title': f'Checkout - {tier.name} Plan',
     }
     
