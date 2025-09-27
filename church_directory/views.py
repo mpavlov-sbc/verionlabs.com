@@ -202,19 +202,6 @@ def checkout(request):
             # Log the submission attempt for debugging
             logger.info(f"Payment submission attempt for email: {form.cleaned_data.get('email', 'unknown')}")
             
-            # Prevent duplicate submissions by checking for recent pending subscriptions
-            recent_pending = Subscription.objects.filter(
-                email=form.cleaned_data.get('email'),
-                status__in=['pending', 'processing'],
-                created_at__gte=timezone.now() - timedelta(minutes=5)  # Within last 5 minutes
-            ).first()
-            
-            if recent_pending:
-                logger.warning(f"Duplicate payment submission detected for email {form.cleaned_data.get('email')} - recent pending subscription {recent_pending.id}")
-                messages.warning(request, 'Payment is already being processed. Please wait a moment before trying again.')
-                # Use GET redirect to prevent browser resubmission on refresh
-                return redirect('church_directory:checkout')
-            
             checkout_form = CheckoutForm(request.POST)
             if checkout_form.is_valid():
                 return _process_checkout(request, checkout_form, tier, billing_period, applied_coupon, base_amount, discount_amount, final_amount)
