@@ -205,9 +205,26 @@ def checkout(request):
 def _process_checkout(request, form, tier, billing_period, coupon, base_amount, discount_amount, final_amount):
     """Process the checkout form and create subscription with checkout session"""
     try:
+        email = form.cleaned_data['email']
+        
+        # Check if user already has an active subscription
+        existing_active_subscription = Subscription.objects.filter(
+            email=email,
+            status='active'
+        ).first()
+        
+        if existing_active_subscription:
+            logger.warning(f"User {email} attempted to purchase new subscription but already has active subscription {existing_active_subscription.id}")
+            messages.error(
+                request, 
+                'You already have an active subscription. Please cancel your existing subscription before purchasing a new one, or contact support if you need assistance.'
+            )
+            checkout_url = reverse('church_directory:checkout') + f'?tier={tier.id}&billing={billing_period}'
+            return HttpResponseRedirect(checkout_url)
+        
         # Create subscription record
         subscription = Subscription.objects.create(
-            email=form.cleaned_data['email'],
+            email=email,
             church_name=form.cleaned_data['church_name'],
             contact_name=form.cleaned_data['contact_name'],
             phone=form.cleaned_data.get('phone', ''),
@@ -407,18 +424,29 @@ def payment_success(request, subscription_id):
         except WebsiteConfig.DoesNotExist:
             config = None
         
-        # Create lead record for follow-up
-        Lead.objects.get_or_create(
-            email=subscription.email,
-            defaults={
-                'church_name': subscription.church_name,
-                'contact_name': subscription.contact_name,
-                'phone': subscription.phone,
-                'source': 'successful_payment',
-                'interested_tier': subscription.pricing_tier,
-                'message': f'Successfully paid for {subscription.pricing_tier.name} plan ({subscription.billing_period}). Amount: ${subscription.final_amount}'
-            }
-        )
+        # Create or update lead record for follow-up
+        lead = Lead.objects.filter(email=subscription.email).order_by('-created_at').first()
+        
+        if lead:
+            # Update existing lead with payment information
+            lead.church_name = subscription.church_name
+            lead.contact_name = subscription.contact_name
+            lead.phone = subscription.phone
+            lead.source = 'successful_payment'
+            lead.interested_tier = subscription.pricing_tier
+            lead.message = f'Successfully paid for {subscription.pricing_tier.name} plan ({subscription.billing_period}). Amount: ${subscription.final_amount}'
+            lead.save()
+        else:
+            # Create new lead record
+            Lead.objects.create(
+                email=subscription.email,
+                church_name=subscription.church_name,
+                contact_name=subscription.contact_name,
+                phone=subscription.phone,
+                source='successful_payment',
+                interested_tier=subscription.pricing_tier,
+                message=f'Successfully paid for {subscription.pricing_tier.name} plan ({subscription.billing_period}). Amount: ${subscription.final_amount}'
+            )
         
         context = {
             'subscription': subscription,
