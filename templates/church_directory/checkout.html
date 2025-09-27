@@ -42,7 +42,7 @@
             <div class="lg:col-span-2">
                 <form method="post" id="checkout-form">
                     {% csrf_token %}
-                    <input type="hidden" name="submit_payment" value="1">
+                    <input type="hidden" name="submission_token" value="{{ submission_token }}">
 
                     <!-- Customer Information -->
                     <div class="checkout-section">
@@ -244,16 +244,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('checkout-form');
     const submitBtn = document.getElementById('submit-btn');
     const loadingOverlay = document.getElementById('loading-overlay');
+    let isSubmitting = false; // Prevent multiple submissions
     
     form.addEventListener('submit', function(e) {
+        // Prevent multiple submissions
+        if (isSubmitting) {
+            e.preventDefault();
+            return false;
+        }
+        
         // Check if this is the final payment submission
         if (e.submitter && e.submitter.name === 'submit_payment') {
+            isSubmitting = true;
+            
             // Show loading overlay
             loadingOverlay.classList.remove('hidden');
             
             // Disable form elements
             submitBtn.disabled = true;
             submitBtn.innerHTML = 'Redirecting to Stripe...';
+            
+            // Disable all form inputs to prevent changes
+            const inputs = form.querySelectorAll('input, button, select, textarea');
+            inputs.forEach(input => {
+                if (input !== submitBtn) {
+                    input.disabled = true;
+                }
+            });
         }
     });
     

@@ -12,6 +12,7 @@ from decimal import Decimal
 import json
 import uuid
 import logging
+from datetime import timedelta
 import stripe
 
 from .models import PricingTier, Coupon, Subscription, Lead, WebsiteConfig, PaymentIntent
@@ -146,6 +147,11 @@ def checkout(request):
     checkout_form = CheckoutForm()
     coupon_form = CouponForm()
     
+    # Generate a unique submission token to prevent duplicate submissions
+    import uuid
+    submission_token = str(uuid.uuid4())
+    request.session['checkout_submission_token'] = submission_token
+    
     # Handle coupon application
     applied_coupon = None
     discount_amount = Decimal('0.00')
@@ -181,6 +187,34 @@ def checkout(request):
             messages.info(request, 'Coupon removed.')
         
         elif 'submit_payment' in request.POST:
+            # Check submission token to prevent duplicate submissions
+            submitted_token = request.POST.get('submission_token')
+            session_token = request.session.get('checkout_submission_token')
+            
+            if not submitted_token or submitted_token != session_token:
+                logger.warning(f"Invalid or missing submission token for checkout attempt")
+                messages.error(request, 'Form submission error. Please try again.')
+                return redirect('church_directory:checkout')
+            
+            # Clear the token after use
+            request.session.pop('checkout_submission_token', None)
+            
+            # Log the submission attempt for debugging
+            logger.info(f"Payment submission attempt for email: {form.cleaned_data.get('email', 'unknown')}")
+            
+            # Prevent duplicate submissions by checking for recent pending subscriptions
+            recent_pending = Subscription.objects.filter(
+                email=form.cleaned_data.get('email'),
+                status__in=['pending', 'processing'],
+                created_at__gte=timezone.now() - timedelta(minutes=5)  # Within last 5 minutes
+            ).first()
+            
+            if recent_pending:
+                logger.warning(f"Duplicate payment submission detected for email {form.cleaned_data.get('email')} - recent pending subscription {recent_pending.id}")
+                messages.warning(request, 'Payment is already being processed. Please wait a moment before trying again.')
+                # Use GET redirect to prevent browser resubmission on refresh
+                return redirect('church_directory:checkout')
+            
             checkout_form = CheckoutForm(request.POST)
             if checkout_form.is_valid():
                 return _process_checkout(request, checkout_form, tier, billing_period, applied_coupon, base_amount, discount_amount, final_amount)
@@ -196,6 +230,7 @@ def checkout(request):
         'coupon_form': coupon_form,
         'config': config,
         'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY,
+        'submission_token': submission_token,
         'page_title': f'Checkout - {tier.name} Plan',
     }
     
@@ -210,17 +245,17 @@ def _process_checkout(request, form, tier, billing_period, coupon, base_amount, 
         # Check if user already has an active subscription
         existing_active_subscription = Subscription.objects.filter(
             email=email,
-            status='active'
+            status__in=['active', 'processing']  # Include processing to prevent race conditions
         ).first()
         
         if existing_active_subscription:
-            logger.warning(f"User {email} attempted to purchase new subscription but already has active subscription {existing_active_subscription.id}")
+            logger.warning(f"User {email} attempted to purchase new subscription but already has active/processing subscription {existing_active_subscription.id} (status: {existing_active_subscription.status})")
             messages.error(
                 request, 
                 'You already have an active subscription. Please cancel your existing subscription before purchasing a new one, or contact support if you need assistance.'
             )
-            checkout_url = reverse('church_directory:checkout') + f'?tier={tier.id}&billing={billing_period}'
-            return HttpResponseRedirect(checkout_url)
+            # Use GET redirect to prevent browser resubmission on refresh
+            return redirect('church_directory:checkout')  # Remove query params to avoid confusion
         
         # Create subscription record
         subscription = Subscription.objects.create(
@@ -294,14 +329,14 @@ def _process_checkout(request, form, tier, billing_period, coupon, base_amount, 
                 coupon.save()
             
             messages.error(request, 'Payment processing failed. Please try again.')
-            checkout_url = reverse('church_directory:checkout') + f'?tier={tier.id}&billing={billing_period}'
-            return HttpResponseRedirect(checkout_url)
+            # Use GET redirect to prevent browser resubmission on refresh
+            return redirect('church_directory:checkout')
     
     except Exception as e:
         logger.error(f"Unexpected error during checkout processing: {e}")
         messages.error(request, 'An unexpected error occurred. Please try again.')
-        checkout_url = reverse('church_directory:checkout') + f'?tier={tier.id}&billing={billing_period}'
-        return HttpResponseRedirect(checkout_url)
+        # Use GET redirect to prevent browser resubmission on refresh
+        return redirect('church_directory:checkout')
 
 
 # PaymentProcessView is no longer needed with Stripe Checkout
