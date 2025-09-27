@@ -264,12 +264,10 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.disabled = true;
             submitBtn.innerHTML = 'Redirecting to Stripe...';
             
-            // Disable all form inputs to prevent changes
-            const inputs = form.querySelectorAll('input, button, select, textarea');
+            // Disable all form inputs to prevent changes (but keep hidden inputs enabled)
+            const inputs = form.querySelectorAll('input:not([type="hidden"]), button:not([name="submit_payment"]), select, textarea');
             inputs.forEach(input => {
-                if (input !== submitBtn) {
-                    input.disabled = true;
-                }
+                input.disabled = true;
             });
         }
     });
