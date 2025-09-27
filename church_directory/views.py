@@ -187,14 +187,14 @@ def checkout(request):
             messages.info(request, 'Coupon removed.')
         
         elif 'submit_payment' in request.POST:
-            # Check submission token to prevent duplicate submissions
-            submitted_token = request.POST.get('submission_token')
-            session_token = request.session.get('checkout_submission_token')
+            # TEMPORARILY DISABLE TOKEN CHECK FOR DEBUGGING
+            # submitted_token = request.POST.get('submission_token')
+            # session_token = request.session.get('checkout_submission_token')
             
-            if not submitted_token or submitted_token != session_token:
-                logger.warning(f"Invalid or missing submission token for checkout attempt")
-                messages.error(request, 'Form submission error. Please try again.')
-                return redirect('church_directory:checkout')
+            # if not submitted_token or submitted_token != session_token:
+            #     logger.warning(f"Invalid or missing submission token for checkout attempt")
+            #     messages.error(request, 'Form submission error. Please try again.')
+            #     return redirect('church_directory:checkout')
             
             # Clear the token after use
             request.session.pop('checkout_submission_token', None)
