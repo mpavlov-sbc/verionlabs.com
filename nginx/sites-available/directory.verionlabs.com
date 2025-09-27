@@ -55,7 +55,7 @@ server {
     location /directory/api/ {
         limit_req zone=api burst=50 nodelay;
         
-        proxy_pass http://django_web/directory/api$request_uri;
+        proxy_pass http://django_web;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -75,7 +75,7 @@ server {
     # Webhook endpoints (no rate limiting for legitimate webhooks)
     location /directory/webhooks/ {
         # Allow Stripe webhooks
-        proxy_pass http://django_web/directory/webhooks$request_uri;
+        proxy_pass http://django_web;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -89,8 +89,29 @@ server {
 
     # Main directory application
     location / {
+        # Rewrite root to /directory/ path
+        rewrite ^/$ /directory/ permanent;
         
-        proxy_pass http://django_web/directory$request_uri;
+        proxy_pass http://django_web;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Timeout settings
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+        
+        # Buffer settings
+        proxy_buffer_size 4k;
+        proxy_buffers 8 4k;
+        proxy_busy_buffers_size 8k;
+    }
+    
+    # Handle directory paths without rewrite
+    location /directory/ {
+        proxy_pass http://django_web;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
