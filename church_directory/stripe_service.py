@@ -253,21 +253,23 @@ class StripeService:
         from django.db import transaction
         
         try:
-            # Store the webhook event
-            webhook_event, created = WebhookEvent.objects.select_for_update().get_or_create(
-                stripe_event_id=event['id'],
-                defaults={
-                    'event_type': event['type'],
-                    'event_data': event,
-                }
-            )
-            
-            if not created and webhook_event.processed:
-                logger.info(f"Webhook event {event['id']} already processed")
-                return True
-            
-            # Process based on event type with transaction
+            # Check if webhook event already exists and is processed
             with transaction.atomic():
+                try:
+                    webhook_event = WebhookEvent.objects.select_for_update().get(stripe_event_id=event['id'])
+                    if webhook_event.processed:
+                        logger.info(f"Webhook event {event['id']} already processed")
+                        return True
+                    # Process the existing event
+                except WebhookEvent.DoesNotExist:
+                    webhook_event = WebhookEvent.objects.create(
+                        stripe_event_id=event['id'],
+                        event_type=event['type'],
+                        event_data=event,
+                    )
+                    # Process the new event
+                
+                # Process based on event type with transaction
                 if event['type'] == 'checkout.session.completed':
                     return StripeService._handle_checkout_session_completed(event, webhook_event)
                 elif event['type'] == 'checkout.session.expired':

@@ -207,95 +207,97 @@ def _process_checkout(request, form, tier, billing_period, coupon, base_amount, 
     try:
         email = form.cleaned_data['email']
         
-        # Check if user already has an active subscription
-        existing_active_subscription = Subscription.objects.filter(
-            email=email,
-            status__in=['active', 'processing', 'pending']  # Include pending to prevent race conditions
-        ).first()
-        
-        if existing_active_subscription:
-            logger.warning(f"User {email} attempted to purchase new subscription but already has active/processing subscription {existing_active_subscription.id} (status: {existing_active_subscription.status})")
-            messages.error(
-                request, 
-                'You already have an active subscription. Please cancel your existing subscription before purchasing a new one, or contact support if you need assistance.'
+        # Check if user already has an active subscription with row locking to prevent race conditions
+        from django.db import transaction
+        with transaction.atomic():
+            existing_active_subscription = Subscription.objects.select_for_update().filter(
+                email=email,
+                status__in=['active', 'processing', 'pending']  # Include pending to prevent race conditions
+            ).first()
+            
+            if existing_active_subscription:
+                logger.warning(f"User {email} attempted to purchase new subscription but already has active/processing subscription {existing_active_subscription.id} (status: {existing_active_subscription.status})")
+                messages.error(
+                    request, 
+                    'You already have an active subscription. Please cancel your existing subscription before purchasing a new one, or contact support if you need assistance.'
+                )
+                checkout_url = reverse('church_directory:checkout') + f'?tier={tier.id}&billing={billing_period}'
+                return HttpResponseRedirect(checkout_url)
+            
+            # Create subscription record
+            subscription = Subscription.objects.create(
+                email=email,
+                church_name=form.cleaned_data['church_name'],
+                contact_name=form.cleaned_data['contact_name'],
+                phone=form.cleaned_data.get('phone', ''),
+                pricing_tier=tier,
+                billing_period=billing_period,
+                base_amount=base_amount,
+                discount_amount=discount_amount,
+                final_amount=final_amount,
+                coupon_used=coupon,
+                status='pending'
             )
-            checkout_url = reverse('church_directory:checkout') + f'?tier={tier.id}&billing={billing_period}'
-            return HttpResponseRedirect(checkout_url)
         
-        # Create subscription record
-        subscription = Subscription.objects.create(
-            email=email,
-            church_name=form.cleaned_data['church_name'],
-            contact_name=form.cleaned_data['contact_name'],
-            phone=form.cleaned_data.get('phone', ''),
-            pricing_tier=tier,
-            billing_period=billing_period,
-            base_amount=base_amount,
-            discount_amount=discount_amount,
-            final_amount=final_amount,
-            coupon_used=coupon,
-            status='pending'
-        )
-        
-        # Create Stripe customer (optional for checkout)
-        stripe_customer_id = None
-        try:
-            stripe_customer = StripeService.create_customer(
-                email=subscription.email,
-                name=subscription.contact_name,
-                church_name=subscription.church_name,
-                phone=subscription.phone
-            )
-            stripe_customer_id = stripe_customer.id
-            subscription.stripe_customer_id = stripe_customer_id
-            subscription.save()
+            # Create Stripe customer (optional for checkout)
+            stripe_customer_id = None
+            try:
+                stripe_customer = StripeService.create_customer(
+                    email=subscription.email,
+                    name=subscription.contact_name,
+                    church_name=subscription.church_name,
+                    phone=subscription.phone
+                )
+                stripe_customer_id = stripe_customer.id
+                subscription.stripe_customer_id = stripe_customer_id
+                subscription.save()
+                
+            except stripe.error.StripeError as e:
+                logger.warning(f"Failed to create Stripe customer for subscription {subscription.id}: {e}")
+                # Continue without customer - Stripe Checkout will create one
             
-        except stripe.error.StripeError as e:
-            logger.warning(f"Failed to create Stripe customer for subscription {subscription.id}: {e}")
-            # Continue without customer - Stripe Checkout will create one
-        
-        # Create Checkout Session
-        try:
-            success_url = request.build_absolute_uri(
-                reverse('church_directory:payment_success', kwargs={'subscription_id': subscription.id})
-            )
-            cancel_url = request.build_absolute_uri(
-                reverse('church_directory:payment_cancel')
-            ) + f'?subscription_id={subscription.id}'
-            
-            checkout_session, local_payment_intent = StripeService.create_checkout_session(
-                subscription=subscription,
-                success_url=success_url,
-                cancel_url=cancel_url,
-                customer_id=stripe_customer_id
-            )
-            
-            subscription.stripe_payment_intent_id = checkout_session.id  # Store session ID
-            subscription.status = 'processing'
-            subscription.save()
-            
-            # Update coupon usage
-            if coupon:
-                coupon.used_count += 1
-                coupon.save()
-            
-            # Redirect to Stripe Checkout
-            return redirect(checkout_session.url)
-            
-        except stripe.error.StripeError as e:
-            logger.error(f"Failed to create Checkout Session for subscription {subscription.id}: {e}")
-            subscription.status = 'failed'
-            subscription.notes = f"Failed to create Checkout Session: {str(e)}"
-            subscription.save()
-            
-            # Revert coupon usage if it was applied
-            if coupon:
-                coupon.used_count = max(0, coupon.used_count - 1)
-                coupon.save()
-            
-            messages.error(request, 'Payment processing failed. Please try again.')
-            checkout_url = reverse('church_directory:checkout') + f'?tier={tier.id}&billing={billing_period}'
-            return HttpResponseRedirect(checkout_url)
+            # Create Checkout Session
+            try:
+                success_url = request.build_absolute_uri(
+                    reverse('church_directory:payment_success', kwargs={'subscription_id': subscription.id})
+                )
+                cancel_url = request.build_absolute_uri(
+                    reverse('church_directory:payment_cancel')
+                ) + f'?subscription_id={subscription.id}'
+                
+                checkout_session, local_payment_intent = StripeService.create_checkout_session(
+                    subscription=subscription,
+                    success_url=success_url,
+                    cancel_url=cancel_url,
+                    customer_id=stripe_customer_id
+                )
+                
+                subscription.stripe_payment_intent_id = checkout_session.id  # Store session ID
+                subscription.status = 'processing'
+                subscription.save()
+                
+                # Update coupon usage
+                if coupon:
+                    coupon.used_count += 1
+                    coupon.save()
+                
+                # Redirect to Stripe Checkout
+                return redirect(checkout_session.url)
+                
+            except stripe.error.StripeError as e:
+                logger.error(f"Failed to create Checkout Session for subscription {subscription.id}: {e}")
+                subscription.status = 'failed'
+                subscription.notes = f"Failed to create Checkout Session: {str(e)}"
+                subscription.save()
+                
+                # Revert coupon usage if it was applied
+                if coupon:
+                    coupon.used_count = max(0, coupon.used_count - 1)
+                    coupon.save()
+                
+                messages.error(request, 'Payment processing failed. Please try again.')
+                checkout_url = reverse('church_directory:checkout') + f'?tier={tier.id}&billing={billing_period}'
+                return HttpResponseRedirect(checkout_url)
     
     except Exception as e:
         logger.error(f"Unexpected error during checkout processing: {e}")
