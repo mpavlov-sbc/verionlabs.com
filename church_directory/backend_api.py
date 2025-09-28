@@ -44,12 +44,21 @@ class BackendApiService:
             # Log the request
             logger.info(f"Backend API {method} {url} - Status: {response.status_code}")
             
-            if response.status_code == 200:
-                return True, response.json()
-            elif response.status_code == 201:
-                return True, response.json()
+            if response.status_code in [200, 201]:
+                try:
+                    return True, response.json()
+                except ValueError:
+                    # Response might not be JSON
+                    logger.warning(f"Backend API returned non-JSON response: {response.text[:200]}")
+                    return True, {'status': 'success', 'message': 'Request completed'}
             else:
-                error_data = response.json() if response.content else {}
+                try:
+                    error_data = response.json()
+                except ValueError:
+                    # Handle non-JSON error responses (like 404 HTML pages)
+                    error_text = response.text[:500] if response.text else 'No error message'
+                    error_data = {'error': f'HTTP {response.status_code}', 'details': error_text}
+                
                 logger.error(f"Backend API error {response.status_code}: {error_data}")
                 return False, error_data
                 
@@ -62,6 +71,9 @@ class BackendApiService:
         except requests.exceptions.RequestException as e:
             logger.error(f"Backend API request error for {method} {url}: {e}")
             return False, {'error': f'Request failed: {str(e)}'}
+        except ValueError as e:
+            logger.error(f"Backend API JSON decode error for {method} {url}: {e}")
+            return False, {'error': f'Invalid JSON response: {str(e)}'}
         except Exception as e:
             logger.error(f"Unexpected error in backend API request: {e}")
             return False, {'error': f'Unexpected error: {str(e)}'}
@@ -77,6 +89,9 @@ class BackendApiService:
                 'tenant_slug': subscription.backend_tenant_slug,
                 'message': 'Organization already exists'
             }
+        
+        # Log the backend URL being used for debugging
+        logger.info(f"Creating organization for subscription {subscription.id} using backend URL: {self.backend_url}")
         
         # Prepare organization data
         organization_data = {

@@ -53,8 +53,16 @@ class StripeService:
     
     @staticmethod
     def create_customer(email: str, name: str, church_name: str, phone: str = None) -> Dict[str, Any]:
-        """Create a Stripe customer"""
+        """Create a Stripe customer with idempotency check"""
         try:
+            # First, try to find an existing customer by email to prevent duplicates
+            existing_customers = stripe.Customer.list(email=email, limit=1)
+            if existing_customers.data:
+                existing_customer = existing_customers.data[0]
+                logger.info(f"Found existing Stripe customer {existing_customer.id} for {email}")
+                return existing_customer
+            
+            # Create new customer if none exists
             customer_data = {
                 'email': email,
                 'name': name,
@@ -73,7 +81,7 @@ class StripeService:
             return customer
             
         except stripe.error.StripeError as e:
-            logger.error(f"Failed to create Stripe customer for {email}: {e}")
+            logger.error(f"Failed to create/retrieve Stripe customer for {email}: {e}")
             raise
     
     @staticmethod
@@ -249,60 +257,82 @@ class StripeService:
     
     @staticmethod
     def handle_webhook_event(event: Dict[str, Any]) -> bool:
-        """Handle a Stripe webhook event"""
+        """Handle a Stripe webhook event with proper idempotency"""
         from django.db import transaction
         
+        event_id = event['id']
+        event_type = event['type']
+        
         try:
-            # Check if webhook event already exists and is processed
+            # Use atomic transaction with select_for_update to prevent race conditions
             with transaction.atomic():
-                try:
-                    webhook_event = WebhookEvent.objects.select_for_update().get(stripe_event_id=event['id'])
-                    if webhook_event.processed:
-                        logger.info(f"Webhook event {event['id']} already processed")
-                        return True
-                    # Process the existing event
-                except WebhookEvent.DoesNotExist:
-                    webhook_event = WebhookEvent.objects.create(
-                        stripe_event_id=event['id'],
-                        event_type=event['type'],
-                        event_data=event,
-                    )
-                    # Process the new event
+                # Try to get existing webhook event with row locking
+                webhook_event, created = WebhookEvent.objects.select_for_update().get_or_create(
+                    stripe_event_id=event_id,
+                    defaults={
+                        'event_type': event_type,
+                        'event_data': event,
+                        'processed': False
+                    }
+                )
                 
-                # Process based on event type with transaction
-                if event['type'] == 'checkout.session.completed':
-                    return StripeService._handle_checkout_session_completed(event, webhook_event)
-                elif event['type'] == 'checkout.session.expired':
-                    return StripeService._handle_checkout_session_expired(event, webhook_event)
-                elif event['type'] == 'payment_intent.succeeded':
-                    return StripeService._handle_payment_intent_succeeded(event, webhook_event)
-                elif event['type'] == 'payment_intent.payment_failed':
-                    return StripeService._handle_payment_intent_failed(event, webhook_event)
-                elif event['type'] == 'invoice.payment_succeeded':
-                    return StripeService._handle_invoice_payment_succeeded(event, webhook_event)
-                elif event['type'] == 'invoice.payment_failed':
-                    return StripeService._handle_invoice_payment_failed(event, webhook_event)
-                elif event['type'] == 'customer.subscription.updated':
-                    return StripeService._handle_subscription_updated(event, webhook_event)
-                elif event['type'] == 'customer.subscription.deleted':
-                    return StripeService._handle_subscription_deleted(event, webhook_event)
+                # If webhook already processed, return success immediately
+                if webhook_event.processed and not created:
+                    logger.info(f"Webhook event {event_id} already processed, skipping")
+                    return True
+                
+                # If webhook exists but not processed, or it's a new webhook, process it
+                logger.info(f"Processing {'new' if created else 'existing'} webhook event {event_id} - {event_type}")
+                
+                # Process based on event type within the same transaction
+                success = False
+                if event_type == 'checkout.session.completed':
+                    success = StripeService._handle_checkout_session_completed(event, webhook_event)
+                elif event_type == 'checkout.session.expired':
+                    success = StripeService._handle_checkout_session_expired(event, webhook_event)
+                elif event_type == 'payment_intent.succeeded':
+                    success = StripeService._handle_payment_intent_succeeded(event, webhook_event)
+                elif event_type == 'payment_intent.payment_failed':
+                    success = StripeService._handle_payment_intent_failed(event, webhook_event)
+                elif event_type == 'invoice.payment_succeeded':
+                    success = StripeService._handle_invoice_payment_succeeded(event, webhook_event)
+                elif event_type == 'invoice.payment_failed':
+                    success = StripeService._handle_invoice_payment_failed(event, webhook_event)
+                elif event_type == 'customer.subscription.updated':
+                    success = StripeService._handle_subscription_updated(event, webhook_event)
+                elif event_type == 'customer.subscription.deleted':
+                    success = StripeService._handle_subscription_deleted(event, webhook_event)
                 else:
-                    logger.info(f"Unhandled webhook event type: {event['type']}")
+                    logger.info(f"Unhandled webhook event type: {event_type}")
                     webhook_event.processed = True
                     webhook_event.processed_at = timezone.now()
                     webhook_event.save()
-                    return True
+                    success = True
+                
+                # Mark as processed if successful (individual handlers do this, but double-check)
+                if success and not webhook_event.processed:
+                    webhook_event.processed = True
+                    webhook_event.processed_at = timezone.now()
+                    webhook_event.save()
+                
+                return success
                 
         except Exception as e:
-            logger.error(f"Error processing webhook event {event['id']}: {e}")
-            if 'webhook_event' in locals():
+            logger.error(f"Error processing webhook event {event_id}: {e}")
+            # Try to update webhook event with error outside of failed transaction
+            try:
+                webhook_event = WebhookEvent.objects.get(stripe_event_id=event_id)
                 webhook_event.processing_error = str(e)
                 webhook_event.save()
+            except WebhookEvent.DoesNotExist:
+                pass
             return False
     
     @staticmethod
     def _handle_checkout_session_completed(event: Dict[str, Any], webhook_event: WebhookEvent) -> bool:
         """Handle completed checkout session"""
+        from django.db import transaction
+        
         try:
             checkout_session = event['data']['object']
             session_id = checkout_session['id']
@@ -310,16 +340,18 @@ class StripeService:
             # Find related subscription
             subscription_id = checkout_session['metadata'].get('subscription_id')
             if subscription_id:
-                try:
-                    subscription = Subscription.objects.get(id=subscription_id)
-                    
-                    # Idempotency check: Don't reprocess if already active
-                    if subscription.status == 'active' and subscription.start_date:
-                        logger.info(f"Subscription {subscription_id} already activated, skipping duplicate processing")
-                        webhook_event.processed = True
-                        webhook_event.processed_at = timezone.now()
-                        webhook_event.save()
-                        return True
+                # Use atomic transaction with row locking to prevent race conditions
+                with transaction.atomic():
+                    try:
+                        subscription = Subscription.objects.select_for_update().get(id=subscription_id)
+                        
+                        # Idempotency check: Don't reprocess if already active
+                        if subscription.status == 'active' and subscription.start_date:
+                            logger.info(f"Subscription {subscription_id} already activated, skipping duplicate processing")
+                            webhook_event.processed = True
+                            webhook_event.processed_at = timezone.now()
+                            webhook_event.save()
+                            return True
                     
                     # Validate status transition
                     if not StripeService._validate_status_transition(subscription.status, 'active'):
@@ -367,24 +399,29 @@ class StripeService:
                     except PaymentIntent.DoesNotExist:
                         logger.warning(f"Local PaymentIntent record not found for checkout session {session_id}")
                     
-                    # Integrate with backend API to create organization (only if not already done)
-                    if (getattr(settings, 'BACKEND_INTEGRATION_ENABLED', True) and 
-                        subscription.backend_integration_status != 'completed'):
-                        try:
-                            backend_api = BackendApiService()
-                            success, response_data = backend_api.create_organization(subscription)
-                            
-                            if success:
-                                logger.info(f"Successfully created backend organization for subscription {subscription_id}")
-                            else:
-                                logger.error(f"Failed to create backend organization for subscription {subscription_id}: {response_data}")
-                                # Don't fail the webhook - the subscription is still active
-                                
-                        except Exception as e:
-                            logger.error(f"Unexpected error during backend integration for subscription {subscription_id}: {e}")
-                            subscription.backend_integration_status = 'failed'
-                            subscription.backend_integration_data = {'error': str(e)}
+                        # Integrate with backend API to create organization (only if not already done)
+                        if (getattr(settings, 'BACKEND_INTEGRATION_ENABLED', True) and 
+                            subscription.backend_integration_status not in ['completed', 'pending']):
+                            # Set to pending to prevent concurrent processing
+                            subscription.backend_integration_status = 'pending'
                             subscription.save()
+                            
+                            try:
+                                backend_api = BackendApiService()
+                                success, response_data = backend_api.create_organization(subscription)
+                                
+                                if success:
+                                    logger.info(f"Successfully created backend organization for subscription {subscription_id}")
+                                else:
+                                    logger.error(f"Failed to create backend organization for subscription {subscription_id}: {response_data}")
+                                    # Don't fail the webhook - the subscription is still active
+                                    
+                            except Exception as e:
+                                logger.error(f"Unexpected error during backend integration for subscription {subscription_id}: {e}")
+                                # Set integration status to failed but don't fail the webhook
+                                subscription.backend_integration_status = 'failed'
+                                subscription.backend_integration_data = {'error': str(e)}
+                                subscription.save()
                     
                 except Subscription.DoesNotExist:
                     logger.error(f"Subscription {subscription_id} not found for checkout session {session_id}")
@@ -496,7 +533,11 @@ class StripeService:
                     
                     # Integrate with backend API to create organization (only if not already done)
                     if (getattr(settings, 'BACKEND_INTEGRATION_ENABLED', True) and 
-                        subscription.backend_integration_status != 'completed'):
+                        subscription.backend_integration_status not in ['completed', 'pending']):
+                        # Set to pending to prevent concurrent processing
+                        subscription.backend_integration_status = 'pending'
+                        subscription.save()
+                        
                         try:
                             backend_api = BackendApiService()
                             success, response_data = backend_api.create_organization(subscription)
