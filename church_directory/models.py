@@ -221,7 +221,8 @@ class Subscription(models.Model):
     # Integration with main backend
     backend_organization_id = models.CharField(max_length=100, blank=True, help_text="Organization ID in the main church directory backend")
     backend_tenant_slug = models.CharField(max_length=63, blank=True, help_text="Tenant slug for the organization in the main backend")
-    backend_integration_status = models.CharField(max_length=20, default='pending', choices=[
+    backend_integration_status = models.CharField(max_length=20, default='not_started', choices=[
+        ('not_started', 'Not Started'),
         ('pending', 'Pending'),
         ('processing', 'Processing'),
         ('completed', 'Completed'),

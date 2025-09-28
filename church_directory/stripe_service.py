@@ -417,8 +417,14 @@ class StripeService:
                             logger.warning(f"Local PaymentIntent record not found for checkout session {session_id}")
                     
                         # Integrate with backend API to create organization (only if not already done)
-                        if (getattr(settings, 'BACKEND_INTEGRATION_ENABLED', True) and 
-                            subscription.backend_integration_status not in ['completed', 'pending']):
+                        backend_enabled = getattr(settings, 'BACKEND_INTEGRATION_ENABLED', True)
+                        current_status = subscription.backend_integration_status
+                        
+                        logger.info(f"Backend integration check for subscription {subscription_id}: enabled={backend_enabled}, status={current_status}")
+                        
+                        if (backend_enabled and current_status in ['not_started', 'failed']):
+                            logger.info(f"Starting backend integration for subscription {subscription_id}")
+                            
                             # Set to pending to prevent concurrent processing
                             subscription.backend_integration_status = 'pending'
                             subscription.save()
@@ -439,6 +445,8 @@ class StripeService:
                                 subscription.backend_integration_status = 'failed'
                                 subscription.backend_integration_data = {'error': str(e)}
                                 subscription.save()
+                        else:
+                            logger.info(f"Skipping backend integration for subscription {subscription_id}: enabled={backend_enabled}, status={current_status}")
                         
                     except Subscription.DoesNotExist:
                         logger.error(f"Subscription {subscription_id} not found for checkout session {session_id}")
@@ -549,8 +557,14 @@ class StripeService:
                     logger.info(f"Activated subscription {subscription_id} from payment intent {payment_intent_id}")
                     
                     # Integrate with backend API to create organization (only if not already done)
-                    if (getattr(settings, 'BACKEND_INTEGRATION_ENABLED', True) and 
-                        subscription.backend_integration_status not in ['completed', 'pending']):
+                    backend_enabled = getattr(settings, 'BACKEND_INTEGRATION_ENABLED', True)
+                    current_status = subscription.backend_integration_status
+                    
+                    logger.info(f"Backend integration check for subscription {subscription_id}: enabled={backend_enabled}, status={current_status}")
+                    
+                    if (backend_enabled and current_status in ['not_started', 'failed']):
+                        logger.info(f"Starting backend integration for subscription {subscription_id}")
+                        
                         # Set to pending to prevent concurrent processing
                         subscription.backend_integration_status = 'pending'
                         subscription.save()
@@ -572,6 +586,8 @@ class StripeService:
                             subscription.backend_integration_status = 'failed'
                             subscription.backend_integration_data = {'error': str(e)}
                             subscription.save()
+                    else:
+                        logger.info(f"Skipping backend integration for subscription {subscription_id}: enabled={backend_enabled}, status={current_status}")
                     
                 except Subscription.DoesNotExist:
                     logger.error(f"Subscription {subscription_id} not found for payment intent {payment_intent_id}")
