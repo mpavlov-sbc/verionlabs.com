@@ -102,10 +102,10 @@ class CouponAdmin(admin.ModelAdmin):
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ['church_name', 'contact_name', 'pricing_tier', 'billing_period', 'final_amount', 'status', 'created_at']
-    list_filter = ['status', 'billing_period', 'pricing_tier', 'created_at']
+    list_display = ['church_name', 'contact_name', 'pricing_tier', 'billing_period', 'final_amount', 'status', 'backend_integration_status_display', 'created_at']
+    list_filter = ['status', 'billing_period', 'pricing_tier', 'backend_integration_status', 'created_at']
     list_editable = ['status']
-    search_fields = ['church_name', 'contact_name', 'email']
+    search_fields = ['church_name', 'contact_name', 'email', 'backend_tenant_slug']
     readonly_fields = ['id', 'created_at', 'updated_at', 'stripe_customer_id', 'stripe_subscription_id', 'stripe_payment_intent_id']
     date_hierarchy = 'created_at'
     
@@ -126,6 +126,10 @@ class SubscriptionAdmin(admin.ModelAdmin):
         ('Dates', {
             'fields': ('start_date', 'end_date')
         }),
+        ('Backend Integration', {
+            'fields': ('backend_integration_status', 'backend_organization_id', 'backend_tenant_slug', 'backend_integration_error'),
+            'description': 'Status of integration with the main church directory backend'
+        }),
         ('Payment Information', {
             'fields': ('stripe_customer_id', 'stripe_subscription_id', 'stripe_payment_intent_id'),
             'classes': ('collapse',)
@@ -139,7 +143,31 @@ class SubscriptionAdmin(admin.ModelAdmin):
         })
     )
     
-    actions = ['mark_active', 'mark_cancelled']
+    actions = ['mark_active', 'mark_cancelled', 'retry_backend_integration', 'retry_failed_backend_integrations']
+    
+    def backend_integration_status_display(self, obj):
+        """Display backend integration status with color coding"""
+        status = obj.backend_integration_status
+        status_colors = {
+            'not_started': 'gray',
+            'pending': 'orange', 
+            'processing': 'blue',
+            'completed': 'green',
+            'failed': 'red',
+        }
+        color = status_colors.get(status, 'gray')
+        display_text = status.replace('_', ' ').title()
+        
+        if status == 'failed' and obj.backend_integration_error:
+            # Show error message on hover
+            return mark_safe(f'<span style="color: {color};" title="{obj.backend_integration_error[:100]}">✗ {display_text}</span>')
+        elif status == 'completed':
+            return mark_safe(f'<span style="color: {color};">✓ {display_text}</span>')
+        else:
+            return mark_safe(f'<span style="color: {color};">{display_text}</span>')
+    
+    backend_integration_status_display.short_description = 'Backend Status'
+    backend_integration_status_display.admin_order_field = 'backend_integration_status'
     
     def mark_active(self, request, queryset):
         updated = queryset.update(status='active')
@@ -150,6 +178,55 @@ class SubscriptionAdmin(admin.ModelAdmin):
         updated = queryset.update(status='cancelled')
         self.message_user(request, f'{updated} subscriptions marked as cancelled.')
     mark_cancelled.short_description = "Mark selected subscriptions as cancelled"
+    
+    def retry_backend_integration(self, request, queryset):
+        """Retry backend integration for selected subscriptions"""
+        from .backend_api import BackendApiService
+        
+        backend_api = BackendApiService()
+        successful = 0
+        failed = 0
+        skipped = 0
+        
+        for subscription in queryset:
+            if subscription.backend_integration_status == 'completed':
+                skipped += 1
+                continue
+                
+            try:
+                success, response_data = backend_api.retry_organization_creation(subscription)
+                if success:
+                    successful += 1
+                else:
+                    failed += 1
+            except Exception as e:
+                failed += 1
+                # Update subscription with error info if not already set
+                subscription.backend_integration_error = str(e)
+                subscription.save()
+        
+        message = f'Backend integration retry completed: {successful} successful, {failed} failed'
+        if skipped > 0:
+            message += f', {skipped} skipped (already completed)'
+            
+        self.message_user(request, message)
+    
+    retry_backend_integration.short_description = "Retry backend integration for selected subscriptions"
+    
+    def retry_failed_backend_integrations(self, request, queryset):
+        """Retry backend integration for all failed subscriptions in the system"""
+        from .backend_api import BackendApiService
+        
+        backend_api = BackendApiService()
+        results = backend_api.retry_failed_integrations()
+        
+        message = f'Bulk retry completed: {results["successful"]} successful, {results["failed"]} failed'
+        if results['skipped'] > 0:
+            message += f', {results["skipped"]} skipped'
+            
+        self.message_user(request, message)
+    
+    retry_failed_backend_integrations.short_description = "Retry ALL failed backend integrations (system-wide)"
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('pricing_tier', 'coupon_used')
