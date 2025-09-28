@@ -54,17 +54,12 @@ class StripeService:
     @staticmethod
     def create_customer(email: str, name: str, church_name: str, phone: str = None) -> Dict[str, Any]:
         """Create a Stripe customer with idempotency check"""
-        import uuid
-        request_id = str(uuid.uuid4())[:8]
-        
         try:
-            logger.info(f"[{request_id}] Starting customer creation/lookup for {email}")
-            
             # First, try to find an existing customer by email to prevent duplicates
             existing_customers = stripe.Customer.list(email=email, limit=1)
             if existing_customers.data:
                 existing_customer = existing_customers.data[0]
-                logger.info(f"[{request_id}] Found existing Stripe customer {existing_customer.id} for {email}")
+                logger.info(f"Found existing Stripe customer {existing_customer.id} for {email}")
                 return existing_customer
             
             # Create new customer if none exists
@@ -82,11 +77,11 @@ class StripeService:
                 customer_data['phone'] = phone
             
             customer = stripe.Customer.create(**customer_data)
-            logger.info(f"[{request_id}] Created Stripe customer {customer.id} for {email}")
+            logger.info(f"Created Stripe customer {customer.id} for {email}")
             return customer
             
         except stripe.error.StripeError as e:
-            logger.error(f"[{request_id}] Failed to create/retrieve Stripe customer for {email}: {e}")
+            logger.error(f"Failed to create/retrieve Stripe customer for {email}: {e}")
             raise
     
     @staticmethod
@@ -173,9 +168,7 @@ class StripeService:
                 stripe_metadata=checkout_session.metadata
             )
             
-            import uuid
-            request_id = str(uuid.uuid4())[:8]
-            logger.info(f"[{request_id}] Created Checkout Session {checkout_session.id} for subscription {subscription.id}")
+            logger.info(f"Created Checkout Session {checkout_session.id} for subscription {subscription.id}")
             return checkout_session, payment_intent
             
         except stripe.error.StripeError as e:
@@ -301,9 +294,7 @@ class StripeService:
                     return True
                 
                 # If webhook exists but not processed, or it's a new webhook, process it
-                import uuid
-                request_id = str(uuid.uuid4())[:8]
-                logger.info(f"[{request_id}] Processing {'new' if created else 'existing'} webhook event {event_id} - {event_type}")
+                logger.info(f"Processing {'new' if created else 'existing'} webhook event {event_id} - {event_type}")
                 
                 # Process based on event type within the same transaction
                 success = False
@@ -417,6 +408,11 @@ class StripeService:
                             local_pi = PaymentIntent.objects.get(stripe_payment_intent_id=session_id)
                             local_pi.status = 'completed'
                             local_pi.save()
+                            
+                            # Store the actual payment intent ID in subscription for future reference
+                            if checkout_session.get('payment_intent'):
+                                subscription.stripe_payment_intent_id = checkout_session['payment_intent']
+                                subscription.save()
                         except PaymentIntent.DoesNotExist:
                             logger.warning(f"Local PaymentIntent record not found for checkout session {session_id}")
                     
@@ -580,13 +576,29 @@ class StripeService:
                 except Subscription.DoesNotExist:
                     logger.error(f"Subscription {subscription_id} not found for payment intent {payment_intent_id}")
             
-            # Update local PaymentIntent record
+            # Update local PaymentIntent record - try both payment intent ID and related subscription
             try:
                 local_pi = PaymentIntent.objects.get(stripe_payment_intent_id=payment_intent_id)
                 local_pi.status = payment_intent['status']
                 local_pi.save()
             except PaymentIntent.DoesNotExist:
-                logger.warning(f"Local PaymentIntent record not found for {payment_intent_id}")
+                # If not found by payment intent ID, try to find by subscription
+                if subscription_id:
+                    try:
+                        subscription = Subscription.objects.get(id=subscription_id)
+                        local_pi = PaymentIntent.objects.filter(subscription=subscription).first()
+                        if local_pi:
+                            # Update with actual payment intent ID and status
+                            local_pi.stripe_payment_intent_id = payment_intent_id
+                            local_pi.status = payment_intent['status']
+                            local_pi.save()
+                            logger.info(f"Updated PaymentIntent record for subscription {subscription_id} with payment intent {payment_intent_id}")
+                        else:
+                            logger.debug(f"No PaymentIntent record found for subscription {subscription_id}")
+                    except Subscription.DoesNotExist:
+                        logger.debug(f"No subscription found for payment intent {payment_intent_id}")
+                else:
+                    logger.debug(f"No local PaymentIntent record found for {payment_intent_id} (this is normal for checkout-based payments)")
             
             webhook_event.processed = True
             webhook_event.processed_at = timezone.now()
