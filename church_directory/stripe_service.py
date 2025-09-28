@@ -254,7 +254,7 @@ class StripeService:
         
         try:
             # Store the webhook event
-            webhook_event, created = WebhookEvent.objects.get_or_create(
+            webhook_event, created = WebhookEvent.objects.select_for_update().get_or_create(
                 stripe_event_id=event['id'],
                 defaults={
                     'event_type': event['type'],

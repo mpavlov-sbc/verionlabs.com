@@ -210,7 +210,7 @@ def _process_checkout(request, form, tier, billing_period, coupon, base_amount, 
         # Check if user already has an active subscription
         existing_active_subscription = Subscription.objects.filter(
             email=email,
-            status__in=['active', 'processing']  # Include processing to prevent race conditions
+            status__in=['active', 'processing', 'pending']  # Include pending to prevent race conditions
         ).first()
         
         if existing_active_subscription:

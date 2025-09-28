@@ -21,7 +21,7 @@ services:
 
   web:
     build: .
-    command: gunicorn --bind 0.0.0.0:8000 --workers 2 --threads 4 --worker-class gthread --log-level warning --access-logfile /dev/null --error-logfile - verionlabs_django.wsgi:application
+    command: sh -c "gunicorn --bind 0.0.0.0:8000 --workers 2 --threads 4 --worker-class gthread --log-level warning --access-logfile $${GUNICORN_ACCESS_LOGFILE:-/dev/null} --error-logfile $${GUNICORN_ERROR_LOGFILE:--} verionlabs_django.wsgi:application"
     volumes:
       - ./staticfiles:/app/staticfiles
       - ./media:/app/media
