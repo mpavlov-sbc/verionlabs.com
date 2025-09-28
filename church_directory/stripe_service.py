@@ -352,52 +352,52 @@ class StripeService:
                             webhook_event.processed_at = timezone.now()
                             webhook_event.save()
                             return True
-                    
-                    # Validate status transition
-                    if not StripeService._validate_status_transition(subscription.status, 'active'):
-                        logger.warning(f"Invalid status transition for subscription {subscription_id}: {subscription.status} -> active")
-                        webhook_event.processed = True
-                        webhook_event.processed_at = timezone.now()
-                        webhook_event.save()
-                        return True
-                    
-                    # Use consistent timestamp for all date calculations
-                    activation_time = timezone.now()
-                    
-                    # Update subscription with Stripe customer info
-                    if checkout_session.get('customer'):
-                        subscription.stripe_customer_id = checkout_session['customer']
-                    
-                    # Update subscription status
-                    subscription.status = 'active'
-                    subscription.start_date = activation_time
-                    
-                    # Set end date based on billing period
-                    if subscription.billing_period == 'annual':
-                        from dateutil.relativedelta import relativedelta
-                        subscription.end_date = activation_time + relativedelta(years=1)
-                        subscription.next_billing_date = subscription.end_date
-                    else:
-                        from dateutil.relativedelta import relativedelta
-                        subscription.end_date = activation_time + relativedelta(months=1)
-                        subscription.next_billing_date = subscription.end_date
-                    
-                    # Store payment intent ID if available
-                    if checkout_session.get('payment_intent'):
-                        subscription.stripe_payment_intent_id = checkout_session['payment_intent']
-                    
-                    subscription.save()
-                    webhook_event.subscription = subscription
-                    
-                    logger.info(f"Activated subscription {subscription_id} from checkout session {session_id}")
-                    
-                    # Update local PaymentIntent record (which stores checkout session data)
-                    try:
-                        local_pi = PaymentIntent.objects.get(stripe_payment_intent_id=session_id)
-                        local_pi.status = 'completed'
-                        local_pi.save()
-                    except PaymentIntent.DoesNotExist:
-                        logger.warning(f"Local PaymentIntent record not found for checkout session {session_id}")
+                        
+                        # Validate status transition
+                        if not StripeService._validate_status_transition(subscription.status, 'active'):
+                            logger.warning(f"Invalid status transition for subscription {subscription_id}: {subscription.status} -> active")
+                            webhook_event.processed = True
+                            webhook_event.processed_at = timezone.now()
+                            webhook_event.save()
+                            return True
+                        
+                        # Use consistent timestamp for all date calculations
+                        activation_time = timezone.now()
+                        
+                        # Update subscription with Stripe customer info
+                        if checkout_session.get('customer'):
+                            subscription.stripe_customer_id = checkout_session['customer']
+                        
+                        # Update subscription status
+                        subscription.status = 'active'
+                        subscription.start_date = activation_time
+                        
+                        # Set end date based on billing period
+                        if subscription.billing_period == 'annual':
+                            from dateutil.relativedelta import relativedelta
+                            subscription.end_date = activation_time + relativedelta(years=1)
+                            subscription.next_billing_date = subscription.end_date
+                        else:
+                            from dateutil.relativedelta import relativedelta
+                            subscription.end_date = activation_time + relativedelta(months=1)
+                            subscription.next_billing_date = subscription.end_date
+                        
+                        # Store payment intent ID if available
+                        if checkout_session.get('payment_intent'):
+                            subscription.stripe_payment_intent_id = checkout_session['payment_intent']
+                        
+                        subscription.save()
+                        webhook_event.subscription = subscription
+                        
+                        logger.info(f"Activated subscription {subscription_id} from checkout session {session_id}")
+                        
+                        # Update local PaymentIntent record (which stores checkout session data)
+                        try:
+                            local_pi = PaymentIntent.objects.get(stripe_payment_intent_id=session_id)
+                            local_pi.status = 'completed'
+                            local_pi.save()
+                        except PaymentIntent.DoesNotExist:
+                            logger.warning(f"Local PaymentIntent record not found for checkout session {session_id}")
                     
                         # Integrate with backend API to create organization (only if not already done)
                         if (getattr(settings, 'BACKEND_INTEGRATION_ENABLED', True) and 
@@ -422,9 +422,9 @@ class StripeService:
                                 subscription.backend_integration_status = 'failed'
                                 subscription.backend_integration_data = {'error': str(e)}
                                 subscription.save()
-                    
-                except Subscription.DoesNotExist:
-                    logger.error(f"Subscription {subscription_id} not found for checkout session {session_id}")
+                        
+                    except Subscription.DoesNotExist:
+                        logger.error(f"Subscription {subscription_id} not found for checkout session {session_id}")
             
             webhook_event.processed = True
             webhook_event.processed_at = timezone.now()
