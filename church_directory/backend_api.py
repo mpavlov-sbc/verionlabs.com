@@ -107,7 +107,7 @@ class BackendApiService:
             'marketing_subscription_id': str(subscription.id),
         }
         
-        success, response_data = self._make_request('POST', '/api/organizations/create-from-marketing/', organization_data)
+        success, response_data = self._make_request('POST', '/api/public/organizations/create-from-marketing/', organization_data)
         
         if success:
             logger.info(f"Successfully created organization for subscription {subscription.id}")
