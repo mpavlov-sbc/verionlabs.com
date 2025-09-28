@@ -442,16 +442,18 @@ class StripeService:
                             # Schedule backend integration as background task
                             # This allows webhook to respond immediately while backend integration
                             # happens asynchronously with proper retry mechanisms
+                            use_async = False
                             if CELERY_AVAILABLE and create_backend_organization_task:
                                 try:
                                     result = create_backend_organization_task.delay(str(subscription_id))
                                     logger.info(f"Backend integration task queued for subscription {subscription_id} with task ID: {result.id}")
+                                    use_async = True
                                 except Exception as e:
                                     logger.error(f"Failed to queue Celery task for subscription {subscription_id}: {e}")
                                     # Fall back to synchronous processing
-                                    CELERY_AVAILABLE = False
+                                    use_async = False
                             
-                            if not CELERY_AVAILABLE:
+                            if not use_async:
                                 # Fallback to synchronous if Celery not available
                                 logger.warning("Celery not available, falling back to synchronous backend integration")
                                 try:
