@@ -22,6 +22,16 @@ from typing import Dict, Any, Optional, Tuple
 from .models import Subscription, PricingTier, Coupon, PaymentIntent, WebhookEvent
 from .backend_api import BackendApiService
 
+
+try:
+    from .tasks import create_backend_organization_task
+    CELERY_AVAILABLE = True
+except ImportError as e:
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Celery tasks not available: {e}")
+    create_backend_organization_task = None
+    CELERY_AVAILABLE = False
+
 # Configure Stripe
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -432,11 +442,16 @@ class StripeService:
                             # Schedule backend integration as background task
                             # This allows webhook to respond immediately while backend integration
                             # happens asynchronously with proper retry mechanisms
-                            try:
-                                from .tasks import create_backend_organization_task
-                                create_backend_organization_task.delay(subscription_id)
-                                logger.info(f"Backend integration task queued for subscription {subscription_id}")
-                            except ImportError:
+                            if CELERY_AVAILABLE and create_backend_organization_task:
+                                try:
+                                    result = create_backend_organization_task.delay(str(subscription_id))
+                                    logger.info(f"Backend integration task queued for subscription {subscription_id} with task ID: {result.id}")
+                                except Exception as e:
+                                    logger.error(f"Failed to queue Celery task for subscription {subscription_id}: {e}")
+                                    # Fall back to synchronous processing
+                                    CELERY_AVAILABLE = False
+                            
+                            if not CELERY_AVAILABLE:
                                 # Fallback to synchronous if Celery not available
                                 logger.warning("Celery not available, falling back to synchronous backend integration")
                                 try:
@@ -452,7 +467,7 @@ class StripeService:
                                     logger.error(f"Unexpected error during backend integration for subscription {subscription_id}: {e}")
                                     # Set integration status to failed but don't fail the webhook
                                     subscription.backend_integration_status = 'failed'
-                                    subscription.backend_integration_data = {'error': str(e)}
+                                    subscription.backend_integration_error = str(e)
                                     subscription.save()
                         else:
                             logger.info(f"Skipping backend integration for subscription {subscription_id}: enabled={backend_enabled}, status={current_status}")

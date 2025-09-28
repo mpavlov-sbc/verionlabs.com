@@ -17,14 +17,17 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks()
 
+# Explicitly import tasks to ensure they're registered
+app.autodiscover_tasks(['church_directory'])
+
 # Celery configuration
 app.conf.update(
-    # Task routing
-    task_routes={
-        'church_directory.tasks.create_backend_organization_task': {'queue': 'backend_integration'},
-        'church_directory.tasks.retry_failed_backend_integrations': {'queue': 'maintenance'},
-        'church_directory.tasks.health_check_backend_integrations': {'queue': 'monitoring'},
-    },
+    # Task routing - Use default queue for now to avoid routing issues
+    # task_routes={
+    #     'church_directory.tasks.create_backend_organization_task': {'queue': 'backend_integration'},
+    #     'church_directory.tasks.retry_failed_backend_integrations': {'queue': 'maintenance'},
+    #     'church_directory.tasks.health_check_backend_integrations': {'queue': 'monitoring'},
+    # },
     
     # Task settings
     task_serializer='json',
