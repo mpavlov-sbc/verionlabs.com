@@ -258,6 +258,10 @@ def _process_checkout(request, form, tier, billing_period, coupon, base_amount, 
             
             # Create Checkout Session
             try:
+                import uuid
+                request_id = str(uuid.uuid4())[:8]
+                logger.info(f"[{request_id}] Starting checkout session creation for subscription {subscription.id}")
+                
                 success_url = request.build_absolute_uri(
                     reverse('church_directory:payment_success', kwargs={'subscription_id': subscription.id})
                 )
@@ -548,7 +552,9 @@ def stripe_webhook(request):
         # Verify webhook signature and construct event
         event = StripeService.construct_webhook_event(payload, sig_header)
         
-        logger.info(f"Received Stripe webhook event: {event['type']} - {event['id']}")
+        import uuid
+        request_id = str(uuid.uuid4())[:8]
+        logger.info(f"[{request_id}] Received Stripe webhook event: {event['type']} - {event['id']}")
         
         # Handle the event
         success = StripeService.handle_webhook_event(event)

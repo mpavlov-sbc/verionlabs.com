@@ -54,12 +54,17 @@ class StripeService:
     @staticmethod
     def create_customer(email: str, name: str, church_name: str, phone: str = None) -> Dict[str, Any]:
         """Create a Stripe customer with idempotency check"""
+        import uuid
+        request_id = str(uuid.uuid4())[:8]
+        
         try:
+            logger.info(f"[{request_id}] Starting customer creation/lookup for {email}")
+            
             # First, try to find an existing customer by email to prevent duplicates
             existing_customers = stripe.Customer.list(email=email, limit=1)
             if existing_customers.data:
                 existing_customer = existing_customers.data[0]
-                logger.info(f"Found existing Stripe customer {existing_customer.id} for {email}")
+                logger.info(f"[{request_id}] Found existing Stripe customer {existing_customer.id} for {email}")
                 return existing_customer
             
             # Create new customer if none exists
@@ -77,11 +82,11 @@ class StripeService:
                 customer_data['phone'] = phone
             
             customer = stripe.Customer.create(**customer_data)
-            logger.info(f"Created Stripe customer {customer.id} for {email}")
+            logger.info(f"[{request_id}] Created Stripe customer {customer.id} for {email}")
             return customer
             
         except stripe.error.StripeError as e:
-            logger.error(f"Failed to create/retrieve Stripe customer for {email}: {e}")
+            logger.error(f"[{request_id}] Failed to create/retrieve Stripe customer for {email}: {e}")
             raise
     
     @staticmethod
@@ -168,7 +173,9 @@ class StripeService:
                 stripe_metadata=checkout_session.metadata
             )
             
-            logger.info(f"Created Checkout Session {checkout_session.id} for subscription {subscription.id}")
+            import uuid
+            request_id = str(uuid.uuid4())[:8]
+            logger.info(f"[{request_id}] Created Checkout Session {checkout_session.id} for subscription {subscription.id}")
             return checkout_session, payment_intent
             
         except stripe.error.StripeError as e:
@@ -266,23 +273,37 @@ class StripeService:
         try:
             # Use atomic transaction with select_for_update to prevent race conditions
             with transaction.atomic():
-                # Try to get existing webhook event with row locking
-                webhook_event, created = WebhookEvent.objects.select_for_update().get_or_create(
-                    stripe_event_id=event_id,
-                    defaults={
-                        'event_type': event_type,
-                        'event_data': event,
-                        'processed': False
-                    }
-                )
+                # Try to get existing webhook event with row locking (nowait to avoid deadlocks)
+                try:
+                    webhook_event = WebhookEvent.objects.select_for_update(nowait=True).get(
+                        stripe_event_id=event_id
+                    )
+                    created = False
+                    logger.info(f"Found existing webhook event {event_id}")
+                except WebhookEvent.DoesNotExist:
+                    # Create new webhook event
+                    webhook_event = WebhookEvent.objects.create(
+                        stripe_event_id=event_id,
+                        event_type=event_type,
+                        event_data=event,
+                        processed=False
+                    )
+                    created = True
+                    logger.info(f"Created new webhook event {event_id}")
+                except transaction.TransactionManagementError:
+                    # If row is locked by another worker, assume it's being processed
+                    logger.info(f"Webhook event {event_id} is being processed by another worker, skipping")
+                    return True
                 
                 # If webhook already processed, return success immediately
-                if webhook_event.processed and not created:
+                if webhook_event.processed:
                     logger.info(f"Webhook event {event_id} already processed, skipping")
                     return True
                 
                 # If webhook exists but not processed, or it's a new webhook, process it
-                logger.info(f"Processing {'new' if created else 'existing'} webhook event {event_id} - {event_type}")
+                import uuid
+                request_id = str(uuid.uuid4())[:8]
+                logger.info(f"[{request_id}] Processing {'new' if created else 'existing'} webhook event {event_id} - {event_type}")
                 
                 # Process based on event type within the same transaction
                 success = False

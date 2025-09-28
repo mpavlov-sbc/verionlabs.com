@@ -229,9 +229,9 @@ LOGGING = {
             'propagate': True,
         },
         'church_directory': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
     },
 }
