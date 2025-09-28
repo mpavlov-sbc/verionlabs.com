@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sitemaps',
+    'django_celery_beat',
     'website',
     'church_directory',
 ]
@@ -255,3 +256,16 @@ SENTRY_DSN = config('SENTRY_DSN', default='')
 # Payment System Health Check Settings
 HEALTH_CHECK_ENABLED = config('HEALTH_CHECK_ENABLED', default=True, cast=bool)
 HEALTH_CHECK_EMAIL_ALERTS = config('HEALTH_CHECK_EMAIL_ALERTS', default=False, cast=bool)
+
+# Celery Configuration for Asynchronous Tasks
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://redis:6379/0')
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://redis:6379/0')
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = True
+
+# Backend Integration Configuration  
+BACKEND_INTEGRATION_ENABLED = config('BACKEND_INTEGRATION_ENABLED', default=True, cast=bool)
+BACKEND_INTEGRATION_ASYNC = config('BACKEND_INTEGRATION_ASYNC', default=True, cast=bool)

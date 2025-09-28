@@ -14,6 +14,31 @@ services:
       - .env.debug
     depends_on:
       - db
+      - redis
+      
+  # Celery worker for background tasks
+  celery_worker:
+    build: .
+    command: celery -A verionlabs_django worker --loglevel=info --concurrency=2
+    volumes:
+      - .:/app
+    env_file:
+      - .env.debug
+    depends_on:
+      - db
+      - redis
+      
+  # Celery beat for scheduled tasks
+  celery_beat:
+    build: .
+    command: celery -A verionlabs_django beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - .:/app
+    env_file:
+      - .env.debug
+    depends_on:
+      - db
+      - redis
       
   db:
     image: postgres:13
@@ -25,6 +50,12 @@ services:
       POSTGRES_PASSWORD: website_password
     ports:
       - "5433:5432"
+      
+  # Redis for Celery broker
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
 
 volumes:
   postgres_data:

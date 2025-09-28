@@ -416,35 +416,44 @@ class StripeService:
                         except PaymentIntent.DoesNotExist:
                             logger.warning(f"Local PaymentIntent record not found for checkout session {session_id}")
                     
-                        # Integrate with backend API to create organization (only if not already done)
+                        # Schedule backend integration asynchronously
                         backend_enabled = getattr(settings, 'BACKEND_INTEGRATION_ENABLED', True)
                         current_status = subscription.backend_integration_status
                         
                         logger.info(f"Backend integration check for subscription {subscription_id}: enabled={backend_enabled}, status={current_status}")
                         
                         if (backend_enabled and current_status in ['not_started', 'failed']):
-                            logger.info(f"Starting backend integration for subscription {subscription_id}")
+                            logger.info(f"Scheduling asynchronous backend integration for subscription {subscription_id}")
                             
                             # Set to pending to prevent concurrent processing
                             subscription.backend_integration_status = 'pending'
                             subscription.save()
                             
+                            # Schedule backend integration as background task
+                            # This allows webhook to respond immediately while backend integration
+                            # happens asynchronously with proper retry mechanisms
                             try:
-                                backend_api = BackendApiService()
-                                success, response_data = backend_api.create_organization(subscription)
-                                
-                                if success:
-                                    logger.info(f"Successfully created backend organization for subscription {subscription_id}")
-                                else:
-                                    logger.error(f"Failed to create backend organization for subscription {subscription_id}: {response_data}")
-                                    # Don't fail the webhook - the subscription is still active
+                                from .tasks import create_backend_organization_task
+                                create_backend_organization_task.delay(subscription_id)
+                                logger.info(f"Backend integration task queued for subscription {subscription_id}")
+                            except ImportError:
+                                # Fallback to synchronous if Celery not available
+                                logger.warning("Celery not available, falling back to synchronous backend integration")
+                                try:
+                                    backend_api = BackendApiService()
+                                    success, response_data = backend_api.create_organization(subscription)
                                     
-                            except Exception as e:
-                                logger.error(f"Unexpected error during backend integration for subscription {subscription_id}: {e}")
-                                # Set integration status to failed but don't fail the webhook
-                                subscription.backend_integration_status = 'failed'
-                                subscription.backend_integration_data = {'error': str(e)}
-                                subscription.save()
+                                    if success:
+                                        logger.info(f"Successfully created backend organization for subscription {subscription_id}")
+                                    else:
+                                        logger.error(f"Failed to create backend organization for subscription {subscription_id}: {response_data}")
+                                        
+                                except Exception as e:
+                                    logger.error(f"Unexpected error during backend integration for subscription {subscription_id}: {e}")
+                                    # Set integration status to failed but don't fail the webhook
+                                    subscription.backend_integration_status = 'failed'
+                                    subscription.backend_integration_data = {'error': str(e)}
+                                    subscription.save()
                         else:
                             logger.info(f"Skipping backend integration for subscription {subscription_id}: enabled={backend_enabled}, status={current_status}")
                         
