@@ -26,13 +26,15 @@ urlpatterns = [
     path('subscription-dashboard/', views.subscription_dashboard, name='subscription_dashboard'),
     path('subscription/<uuid:subscription_id>/', views.subscription_detail, name='subscription_detail'),
     
+    # Authenticated with CHURCH_DIRECTORY_INTEGRATION_API_KEY queried by the django backend
+    path('api/organization-subscription-status/', views.organization_subscription_status_api, name='organization_subscription_status_api'),
+    
     # AJAX API endpoints
     path('api/apply-coupon/', views.apply_coupon_ajax, name='apply_coupon_ajax'),
     path('api/subscription/<uuid:subscription_id>/cancel/', views.cancel_subscription, name='cancel_subscription'),
     path('api/subscription/<uuid:subscription_id>/retry-integration/', views.retry_backend_integration, name='retry_backend_integration'),
     path('api/subscription/<uuid:subscription_id>/customer-portal/', views.create_customer_portal_session, name='create_customer_portal'),
     path('api/subscription/<uuid:subscription_id>/change-billing/', views.change_billing_cycle, name='change_billing_cycle'),
-    path('api/organization-subscription-status/', views.organization_subscription_status_api, name='organization_subscription_status_api'),
     path('subscription-portal/', views.subscription_portal, name='subscription_portal'),
     path('subscription-login/', views.subscription_login, name='subscription_login'),
     path('subscription-auto-login/', views.subscription_auto_login, name='subscription_auto_login'),
