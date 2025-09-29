@@ -686,3 +686,29 @@ class WebhookEvent(models.Model):
     def __str__(self):
         status = "Processed" if self.processed else "Pending"
         return f"{self.event_type} - {self.stripe_event_id} ({status})"
+
+
+class MobileAuthToken(models.Model):
+    """Temporary tokens for mobile-to-web authentication bridge"""
+    token = models.CharField(max_length=100, unique=True, db_index=True)
+    organization_schema = models.CharField(max_length=100)
+    user_id = models.CharField(max_length=50)
+    username = models.CharField(max_length=150)
+    organization_name = models.CharField(max_length=200)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Mobile Auth Token"
+        verbose_name_plural = "Mobile Auth Tokens"
+    
+    def __str__(self):
+        return f"Token for {self.username} ({self.organization_name})"
+    
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+    
+    def is_valid(self):
+        return not self.used and not self.is_expired()

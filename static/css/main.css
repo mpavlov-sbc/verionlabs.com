@@ -187,6 +187,14 @@ body {
     white-space: nowrap;
 }
 
+/* Allow typewriter text to wrap on mobile devices */
+@media (max-width: 640px) {
+    .typewriter {
+        white-space: normal;
+        overflow: visible;
+    }
+}
+
 .typewriter.typing-active::after {
     content: '|';
     position: absolute;

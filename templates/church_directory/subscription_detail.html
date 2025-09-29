@@ -1,0 +1,539 @@
+{% extends 'church_directory/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .detail-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-weight: 600;
+    }
+    
+    .status-active { background-color: #10b981; color: white; }
+    .status-pending { background-color: #f59e0b; color: white; }
+    .status-cancelled { background-color: #ef4444; color: white; }
+    .status-failed { background-color: #ef4444; color: white; }
+    .status-processing { background-color: #3b82f6; color: white; }
+    
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        border: 1px solid;
+        font-size: 0.875rem;
+    }
+    
+    .btn-primary {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #2563eb;
+        border-color: #2563eb;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-secondary {
+        background-color: #6b7280;
+        border-color: #6b7280;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #4b5563;
+        border-color: #4b5563;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
+    }
+    
+    .btn-danger {
+        background-color: #ef4444;
+        border-color: #ef4444;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background-color: #dc2626;
+        border-color: #dc2626;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn-outline-danger {
+        background-color: transparent;
+        border-color: #ef4444;
+        color: #ef4444;
+    }
+    
+    .btn-outline-danger:hover {
+        background-color: #ef4444;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+    }
+    
+    .modal-backdrop {
+        backdrop-filter: blur(4px);
+    }
+    
+    .modal-content {
+        animation: modalFadeIn 0.3s ease-out;
+    }
+    
+    @keyframes modalFadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9) translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+    
+    .loading-spinner {
+        border: 2px solid #f3f4f6;
+        border-top: 2px solid #3b82f6;
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        animation: spin 1s linear infinite;
+        margin-right: 0.5rem;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Subscription Details</h1>
+                    <p class="text-gray-600 mt-1">Manage subscription for {{ subscription.church_name }}</p>
+                </div>
+                <a href="{% url 'church_directory:subscription_dashboard' %}" class="btn btn-secondary">
+                    ← Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main Subscription Info -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-sm border detail-card p-6 mb-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Subscription Information</h2>
+                        <span class="status-badge status-{{ subscription.status }}">
+                            {{ subscription.get_status_display }}
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Church Details</h3>
+                            <div class="space-y-2">
+                                <p><strong>Church Name:</strong> {{ subscription.church_name }}</p>
+                                <p><strong>Contact:</strong> {{ subscription.contact_name }}</p>
+                                <p><strong>Email:</strong> {{ subscription.email }}</p>
+                                {% if subscription.phone %}
+                                <p><strong>Phone:</strong> {{ subscription.phone }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Plan Details</h3>
+                            <div class="space-y-2">
+                                <p><strong>Plan:</strong> {{ subscription.pricing_tier.name }}</p>
+                                <p><strong>Billing:</strong> {{ subscription.billing_period|title }}</p>
+                                <p><strong>Amount:</strong> ${{ subscription.final_amount }}</p>
+                                {% if subscription.next_billing_date %}
+                                <p><strong>Next Billing:</strong> {{ subscription.next_billing_date|date:"M d, Y" }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if subscription.status == 'active' and subscription.stripe_customer_id %}
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Subscription Management</h3>
+                        <div class="flex flex-wrap gap-3">
+                            <button onclick="openCustomerPortal()" class="btn btn-primary">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                </svg>
+                                Manage Payment & Billing
+                            </button>
+                            <button onclick="showChangeBillingModal()" class="btn btn-secondary">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                Change Billing Cycle
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Backend Integration Status -->
+                {% if subscription.backend_organization_id %}
+                <div class="bg-white rounded-lg shadow-sm border detail-card p-6 mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Backend Integration</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <p><strong>Status:</strong> 
+                                <span class="status-badge status-{{ subscription.backend_integration_status }}">
+                                    {{ subscription.get_backend_integration_status_display }}
+                                </span>
+                            </p>
+                            {% if subscription.backend_organization_id %}
+                            <p class="mt-2"><strong>Organization ID:</strong> {{ subscription.backend_organization_id }}</p>
+                            {% endif %}
+                            {% if subscription.backend_tenant_slug %}
+                            <p class="mt-2"><strong>Tenant Slug:</strong> {{ subscription.backend_tenant_slug }}</p>
+                            {% endif %}
+                        </div>
+                        {% if subscription.backend_tenant_slug %}
+                        <div>
+                            <a href="/{{ subscription.backend_tenant_slug }}/admin/" target="_blank" class="btn btn-primary">
+                                Access Church Directory →
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Recent Invoices -->
+                {% if invoices %}
+                <div class="bg-white rounded-lg shadow-sm border detail-card p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Recent Invoices</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700">Amount</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invoice in invoices %}
+                                <tr class="border-b border-gray-100">
+                                    <td class="py-3 px-4">{{ invoice.created|date:"M d, Y" }}</td>
+                                    <td class="py-3 px-4">${{ invoice.amount_paid|floatformat:2 }}</td>
+                                    <td class="py-3 px-4">
+                                        <span class="status-badge status-active">Paid</span>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        {% if invoice.invoice_pdf %}
+                                        <a href="{{ invoice.invoice_pdf }}" target="_blank" class="text-blue-600 hover:underline">
+                                            Download PDF
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-sm border detail-card p-6 mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+                    <div class="space-y-3">
+                        {% if subscription.status == 'active' %}
+                        <button onclick="showCancelModal()" class="w-full btn btn-danger">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            Cancel Subscription
+                        </button>
+                        {% endif %}
+                        
+                        {% if subscription.backend_integration_status == 'failed' %}
+                        <button onclick="retryIntegration()" class="w-full btn btn-primary">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            Retry Backend Integration
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm border detail-card p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Subscription Timeline</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Created</p>
+                                <p class="text-sm text-gray-500">{{ subscription.created_at|date:"M d, Y g:i A" }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if subscription.start_date %}
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Activated</p>
+                                <p class="text-sm text-gray-500">{{ subscription.start_date|date:"M d, Y g:i A" }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if subscription.end_date and subscription.status == 'cancelled' %}
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-2 h-2 bg-red-500 rounded-full mt-2"></div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Cancelled</p>
+                                <p class="text-sm text-gray-500">{{ subscription.end_date|date:"M d, Y g:i A" }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Billing Cycle Modal -->
+<div id="billingModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 modal-backdrop hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md modal-content">
+            <h3 class="text-lg font-medium mb-4">Change Billing Cycle</h3>
+            <p class="text-gray-600 mb-4">Current: {{ subscription.billing_period|title }}</p>
+            <div class="space-y-3">
+                {% if subscription.billing_period == 'monthly' %}
+                <button onclick="changeBillingCycle('annual')" class="w-full btn btn-primary">
+                    Switch to Annual Billing
+                </button>
+                {% else %}
+                <button onclick="changeBillingCycle('monthly')" class="w-full btn btn-primary">
+                    Switch to Monthly Billing
+                </button>
+                {% endif %}
+                <button onclick="closeBillingModal()" class="w-full btn btn-secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Subscription Modal -->
+<div id="cancelModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 modal-backdrop hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md modal-content">
+            <div class="flex items-center mb-4">
+                <div class="flex-shrink-0 w-10 h-10 mx-auto bg-red-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="text-center">
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Cancel Subscription</h3>
+                <p class="text-gray-600 mb-6">
+                    Are you sure you want to cancel your subscription for <strong>{{ subscription.church_name }}</strong>? 
+                    This action cannot be undone and your access will be terminated immediately.
+                </p>
+                <div class="space-y-3">
+                    <button id="confirmCancelBtn" onclick="confirmCancelSubscription()" class="w-full btn btn-danger">
+                        <span id="cancelBtnText">Yes, Cancel Subscription</span>
+                        <div id="cancelBtnSpinner" class="loading-spinner hidden"></div>
+                    </button>
+                    <button onclick="closeCancelModal()" class="w-full btn btn-outline-danger">
+                        Keep Subscription
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openCustomerPortal() {
+    fetch('{% url "church_directory:create_customer_portal" subscription_id=subscription.id %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.open(data.portal_url, '_blank');
+        } else {
+            alert('Error: ' + (data.error || 'Failed to open customer portal'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to open customer portal');
+    });
+}
+
+function showChangeBillingModal() {
+    document.getElementById('billingModal').classList.remove('hidden');
+}
+
+function closeBillingModal() {
+    document.getElementById('billingModal').classList.add('hidden');
+}
+
+function changeBillingCycle(newCycle) {
+    fetch('{% url "church_directory:change_billing_cycle" subscription_id=subscription.id %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            billing_cycle: newCycle
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to change billing cycle'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to change billing cycle');
+    })
+    .finally(() => {
+        closeBillingModal();
+    });
+}
+
+function showCancelModal() {
+    document.getElementById('cancelModal').classList.remove('hidden');
+}
+
+function closeCancelModal() {
+    document.getElementById('cancelModal').classList.add('hidden');
+    // Reset button state
+    document.getElementById('confirmCancelBtn').disabled = false;
+    document.getElementById('cancelBtnText').classList.remove('hidden');
+    document.getElementById('cancelBtnSpinner').classList.add('hidden');
+}
+
+function confirmCancelSubscription() {
+    const confirmBtn = document.getElementById('confirmCancelBtn');
+    const btnText = document.getElementById('cancelBtnText');
+    const spinner = document.getElementById('cancelBtnSpinner');
+    
+    // Show loading state
+    confirmBtn.disabled = true;
+    btnText.classList.add('hidden');
+    spinner.classList.remove('hidden');
+    
+    fetch('{% url "church_directory:cancel_subscription" subscription_id=subscription.id %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message briefly before reload
+            btnText.textContent = 'Subscription Cancelled!';
+            btnText.classList.remove('hidden');
+            spinner.classList.add('hidden');
+            confirmBtn.classList.remove('btn-danger');
+            confirmBtn.classList.add('btn-secondary');
+            
+            // Show warnings if any
+            if (data.warnings && data.warnings.length > 0) {
+                console.warn('Cancellation warnings:', data.warnings);
+                // You could show a toast notification here if desired
+            }
+            
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            // Reset button and show error
+            confirmBtn.disabled = false;
+            btnText.classList.remove('hidden');
+            spinner.classList.add('hidden');
+            
+            alert('Error: ' + (data.error || 'Failed to cancel subscription'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        // Reset button state
+        confirmBtn.disabled = false;
+        btnText.classList.remove('hidden');
+        spinner.classList.add('hidden');
+        
+        alert('Failed to cancel subscription. Please try again.');
+    });
+}
+
+function retryIntegration() {
+    fetch('{% url "church_directory:retry_backend_integration" subscription_id=subscription.id %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to retry integration'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to retry integration');
+    });
+}
+</script>
+{% endblock %}

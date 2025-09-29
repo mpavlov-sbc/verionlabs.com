@@ -220,3 +220,127 @@ class BackendApiService:
         
         logger.info(f"Backend integration retry completed: {results}")
         return results
+    
+    def verify_mobile_auth_token(self, auth_token: str, organization_schema: str) -> Dict[str, Any]:
+        """Verify a mobile app authentication token with the backend"""
+        try:
+            url = f"{self.backend_url}/api/public/authenticate/"
+            
+            payload = {
+                'auth_token': auth_token,
+                'organization_schema': organization_schema
+            }
+            
+            response = requests.post(
+                url,
+                json=payload,
+                headers=self._get_headers(),
+                timeout=self.timeout
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                logger.info(f"Mobile auth token verified for schema: {organization_schema}")
+                return {
+                    'valid': True,
+                    'user_id': data.get('user_id'),
+                    'username': data.get('username'),
+                    'organization_name': data.get('organization_name')
+                }
+            elif response.status_code == 401:
+                logger.warning(f"Invalid mobile auth token for schema: {organization_schema}")
+                return {'valid': False, 'error': 'Invalid authentication'}
+            else:
+                logger.error(f"Backend auth verification failed: {response.status_code}")
+                return {'valid': False, 'error': 'Verification failed'}
+                
+        except requests.RequestException as e:
+            logger.error(f"Network error during mobile auth verification: {e}")
+            return {'valid': False, 'error': 'Network error'}
+        except Exception as e:
+            logger.error(f"Error verifying mobile auth token: {e}")
+            return {'valid': False, 'error': 'Verification error'}
+    
+    def authenticate_user(self, username: str, password: str) -> Dict[str, Any]:
+        """Authenticate user credentials with the backend"""
+        try:
+            url = f"{self.backend_url}/api/public/authenticate/"
+            
+            payload = {
+                'username': username,
+                'password': password
+            }
+            
+            response = requests.post(
+                url,
+                json=payload,
+                headers=self._get_headers(),
+                timeout=self.timeout
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                logger.info(f"User authenticated successfully: {username}")
+                return {
+                    'success': True,
+                    'user_id': data.get('user_id'),
+                    'username': data.get('username'),
+                    'email': data.get('email'),
+                    'organization_schema': data.get('organization_schema'),
+                    'organization_name': data.get('organization_name')
+                }
+            elif response.status_code == 401:
+                logger.warning(f"Authentication failed for username: {username}")
+                return {'success': False, 'error': 'Invalid username or password'}
+            else:
+                logger.error(f"Backend auth failed: {response.status_code}")
+                return {'success': False, 'error': 'Authentication service unavailable'}
+                
+        except requests.RequestException as e:
+            logger.error(f"Network error during user authentication: {e}")
+            return {'success': False, 'error': 'Authentication service unavailable'}
+        except Exception as e:
+            logger.error(f"Error authenticating user: {e}")
+            return {'success': False, 'error': 'Authentication failed'}
+    
+    def verify_mobile_session(self, user_id: str, organization_schema: str) -> Dict[str, Any]:
+        """Verify mobile session data with backend using consolidated authenticate endpoint"""
+        try:
+            url = f"{self.backend_url}/api/public/authenticate/"
+            
+            payload = {
+                'user_id': user_id,
+                'organization_schema': organization_schema,
+                'api_key': self.api_key  # Include API key for website requests
+            }
+            
+            response = requests.post(
+                url,
+                json=payload,
+                headers=self._get_headers(),
+                timeout=self.timeout
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') or data.get('valid'):
+                    logger.info(f"Mobile session verified for user: {user_id}")
+                    return {
+                        'success': True,
+                        'user_id': data.get('user_id'),
+                        'email': data.get('email'),
+                        'organization_name': data.get('organization_name')
+                    }
+                else:
+                    logger.warning(f"Mobile session verification failed for user: {user_id} - {data.get('error')}")
+                    return {'success': False, 'error': data.get('error', 'Session verification failed')}
+            else:
+                logger.warning(f"Mobile session verification failed for user: {user_id} - HTTP {response.status_code}")
+                return {'success': False, 'error': 'Session verification failed'}
+                
+        except requests.RequestException as e:
+            logger.error(f"Network error during session verification: {e}")
+            return {'success': False, 'error': 'Session verification unavailable'}
+        except Exception as e:
+            logger.error(f"Error verifying mobile session: {e}")
+            return {'success': False, 'error': 'Session verification failed'}

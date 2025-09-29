@@ -4,7 +4,6 @@ from django.views.decorators.http import require_http_methods, require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.conf import settings
-from django.views import View
 from django.urls import reverse
 from django.utils import timezone
 from django.core.exceptions import ValidationError
@@ -13,12 +12,72 @@ import json
 import uuid
 import logging
 import stripe
+import requests
 
 from .models import PricingTier, Coupon, Subscription, Lead, WebsiteConfig, PaymentIntent
 from .forms import LeadForm, CheckoutForm, CouponForm
 from .stripe_service import StripeService
+from .backend_api import BackendApiService
 
 logger = logging.getLogger(__name__)
+
+
+def subscription_auth_required(view_func):
+    """
+    Decorator that ensures the user is authenticated via subscription session.
+    Supports both web session auth and mobile token auth.
+    """
+    def wrapper(request, *args, **kwargs):
+        # Check for existing session authentication
+        user_session = request.session.get('subscription_user')
+        if user_session:
+            # Verify session is still valid (not expired)
+            try:
+                auth_time = timezone.datetime.fromisoformat(user_session.get('authenticated_at', ''))
+                if timezone.now() - auth_time < timezone.timedelta(hours=24):  # 24 hour session
+                    return view_func(request, *args, **kwargs)
+            except (ValueError, TypeError):
+                pass
+            # Session expired, clear it
+            del request.session['subscription_user']
+        
+        # Check for mobile auth token in request
+        auth_header = request.META.get('HTTP_AUTHORIZATION')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header[7:]  # Remove 'Bearer ' prefix
+            
+            # Validate mobile auth token
+            from .models import MobileAuthToken
+            try:
+                auth_token = MobileAuthToken.objects.get(token=token)
+                if auth_token.is_valid():
+                    # Create temporary session data for this request
+                    backend_service = BackendApiService()
+                    auth_result = backend_service.verify_mobile_session(
+                        auth_token.user_id,
+                        auth_token.organization_schema
+                    )
+                    
+                    if auth_result['success']:
+                        # Set temporary user session for this request
+                        request.session['subscription_user'] = {
+                            'email': auth_result.get('email'),
+                            'user_id': auth_result.get('user_id'),
+                            'organization_schema': auth_token.organization_schema,
+                            'organization_name': auth_token.organization_name,
+                            'authenticated_at': timezone.now().isoformat(),
+                        }
+                        return view_func(request, *args, **kwargs)
+            except MobileAuthToken.DoesNotExist:
+                pass
+        
+        # No valid authentication found
+        if request.headers.get('Accept') == 'application/json' or request.path.startswith('/api/'):
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+        else:
+            return redirect('church_directory:subscription_login')
+    
+    return wrapper
 
 
 def home(request):
@@ -487,44 +546,6 @@ def payment_failed(request, subscription_id=None):
     return render(request, 'church_directory/payment_failed.html', context)
 
 
-class SubscriptionStatusView(View):
-    """Check subscription status - for customer service and debugging"""
-    
-    def get(self, request):
-        email = request.GET.get('email')
-        subscription_id = request.GET.get('id')
-        
-        if not (email or subscription_id):
-            return JsonResponse({'error': 'Email or subscription ID required'}, status=400)
-        
-        try:
-            if subscription_id:
-                subscription = Subscription.objects.get(id=subscription_id)
-            else:
-                subscription = Subscription.objects.filter(email=email).order_by('-created_at').first()
-                if not subscription:
-                    return JsonResponse({'error': 'Subscription not found'}, status=404)
-            
-            # Don't expose sensitive information
-            return JsonResponse({
-                'subscription_id': str(subscription.id),
-                'church_name': subscription.church_name,
-                'pricing_tier': subscription.pricing_tier.name,
-                'billing_period': subscription.billing_period,
-                'status': subscription.status,
-                'amount': float(subscription.final_amount),
-                'created_at': subscription.created_at.isoformat(),
-                'start_date': subscription.start_date.isoformat() if subscription.start_date else None,
-                'end_date': subscription.end_date.isoformat() if subscription.end_date else None,
-            })
-            
-        except Subscription.DoesNotExist:
-            return JsonResponse({'error': 'Subscription not found'}, status=404)
-        except Exception as e:
-            logger.error(f"Error checking subscription status: {e}")
-            return JsonResponse({'error': 'An error occurred'}, status=500)
-
-
 @csrf_exempt
 def stripe_webhook(request):
     """Handle Stripe webhook events"""
@@ -606,70 +627,37 @@ def payment_cancel(request):
     return render(request, 'church_directory/payment_cancel.html', context)
 
 
-@require_http_methods(["GET"])
-def subscription_status(request, subscription_id):
-    """Get subscription status for AJAX requests"""
-    try:
-        subscription = get_object_or_404(Subscription, id=subscription_id)
-        
-        # Check backend integration status
-        backend_status = 'not_integrated'
-        backend_data = {}
-        
-        if subscription.backend_integration_status == 'completed':
-            backend_status = 'completed'
-            backend_data = {
-                'organization_id': subscription.backend_organization_id,
-                'tenant_slug': subscription.backend_tenant_slug,
-                'login_url': f"/{subscription.backend_tenant_slug}/admin/" if subscription.backend_tenant_slug else None
-            }
-        elif subscription.backend_integration_status == 'failed':
-            backend_status = 'failed'
-        elif subscription.backend_integration_status == 'pending':
-            backend_status = 'pending'
-        
-        return JsonResponse({
-            'subscription': {
-                'id': subscription.id,
-                'status': subscription.status,
-                'church_name': subscription.church_name,
-                'contact_name': subscription.contact_name,
-                'email': subscription.email,
-                'plan': subscription.pricing_tier.name,
-                'billing_period': subscription.billing_period,
-                'amount': float(subscription.final_amount),
-                'created_at': subscription.created_at.isoformat(),
-                'start_date': subscription.start_date.isoformat() if subscription.start_date else None,
-                'end_date': subscription.end_date.isoformat() if subscription.end_date else None,
-            },
-            'backend_integration': {
-                'status': backend_status,
-                'data': backend_data
-            }
-        })
-        
-    except Exception as e:
-        logger.error(f"Error getting subscription status: {e}")
-        return JsonResponse({'error': 'Failed to get subscription status'}, status=500)
-
-
 @require_http_methods(["POST"])
+@subscription_auth_required
 def cancel_subscription(request, subscription_id):
-    """Cancel a subscription"""
+    """Cancel a subscription with comprehensive error handling"""
     try:
         subscription = get_object_or_404(Subscription, id=subscription_id)
+        
+        # Verify user owns this subscription
+        user_session = request.session.get('subscription_user')
+        if not user_session or subscription.backend_tenant_slug != user_session.get('organization_schema'):
+            return JsonResponse({'error': 'Unauthorized access to subscription'}, status=403)
         
         if subscription.status == 'cancelled':
             return JsonResponse({'error': 'Subscription already cancelled'}, status=400)
+        
+        logger.info(f"Starting cancellation process for subscription {subscription.id} (Church: {subscription.church_name})")
+        
+        cancellation_errors = []
         
         # Cancel in Stripe if subscription exists
         if subscription.stripe_subscription_id:
             try:
                 cancelled_subscription = StripeService.cancel_subscription(subscription.stripe_subscription_id)
-                logger.info(f"Cancelled Stripe subscription {subscription.stripe_subscription_id}")
+                logger.info(f"Successfully cancelled Stripe subscription {subscription.stripe_subscription_id}")
             except Exception as e:
+                error_msg = f"Failed to cancel Stripe subscription: {str(e)}"
                 logger.error(f"Error cancelling Stripe subscription {subscription.stripe_subscription_id}: {e}")
-                return JsonResponse({'error': 'Failed to cancel Stripe subscription'}, status=500)
+                cancellation_errors.append(error_msg)
+                # Continue with local cancellation even if Stripe fails
+        else:
+            logger.info(f"No Stripe subscription ID found for subscription {subscription.id}")
         
         # Cancel in backend if integrated
         if subscription.backend_organization_id:
@@ -678,22 +666,32 @@ def cancel_subscription(request, subscription_id):
                 backend_api = BackendApiService()
                 success, response_data = backend_api.handle_subscription_cancellation(subscription)
                 
-                if not success:
+                if success:
+                    logger.info(f"Successfully cancelled backend organization for subscription {subscription.id}")
+                else:
+                    error_msg = f"Backend cancellation failed: {response_data.get('error', 'Unknown error')}"
                     logger.warning(f"Backend cancellation failed for subscription {subscription.id}: {response_data}")
-                    # Don't fail the request - subscription can still be cancelled locally
+                    cancellation_errors.append(error_msg)
+                    # Continue with local cancellation
                     
             except Exception as e:
+                error_msg = f"Backend cancellation error: {str(e)}"
                 logger.error(f"Error cancelling backend organization for subscription {subscription.id}: {e}")
+                cancellation_errors.append(error_msg)
                 # Continue with local cancellation
+        else:
+            logger.info(f"No backend organization ID found for subscription {subscription.id}")
         
-        # Update local subscription
+        # Update local subscription (always do this)
+        old_status = subscription.status
         subscription.status = 'cancelled'
         subscription.end_date = timezone.now().date()
         subscription.save()
         
-        logger.info(f"Successfully cancelled subscription {subscription.id}")
+        logger.info(f"Successfully updated local subscription {subscription.id} status from '{old_status}' to 'cancelled'")
         
-        return JsonResponse({
+        # Prepare response
+        response_data = {
             'success': True,
             'message': 'Subscription cancelled successfully',
             'subscription': {
@@ -701,18 +699,32 @@ def cancel_subscription(request, subscription_id):
                 'status': subscription.status,
                 'end_date': subscription.end_date.isoformat() if subscription.end_date else None
             }
-        })
+        }
+        
+        # Add warnings if there were partial failures
+        if cancellation_errors:
+            response_data['warnings'] = cancellation_errors
+            response_data['message'] = 'Subscription cancelled with some warnings (see details in logs)'
+            logger.warning(f"Subscription {subscription.id} cancelled with warnings: {cancellation_errors}")
+        
+        return JsonResponse(response_data)
         
     except Exception as e:
-        logger.error(f"Error cancelling subscription {subscription_id}: {e}")
+        logger.error(f"Unexpected error cancelling subscription {subscription_id}: {e}")
         return JsonResponse({'error': 'Failed to cancel subscription'}, status=500)
 
 
 @require_http_methods(["POST"])
+@subscription_auth_required
 def retry_backend_integration(request, subscription_id):
     """Retry backend integration for a subscription"""
     try:
         subscription = get_object_or_404(Subscription, id=subscription_id)
+        
+        # Verify user owns this subscription
+        user_session = request.session.get('subscription_user')
+        if not user_session or subscription.backend_tenant_slug != user_session.get('organization_schema'):
+            return JsonResponse({'error': 'Unauthorized access to subscription'}, status=403)
         
         if subscription.status != 'active':
             return JsonResponse({'error': 'Subscription must be active to retry integration'}, status=400)
@@ -784,3 +796,632 @@ def subscription_dashboard(request):
     }
     
     return render(request, 'church_directory/subscription_dashboard.html', context)
+
+
+@require_http_methods(["GET"])
+def subscription_detail(request, subscription_id):
+    """Detailed view of a specific subscription for management"""
+    try:
+        subscription = get_object_or_404(Subscription, id=subscription_id)
+        
+        # Get Stripe subscription details if available
+        stripe_details = None
+        invoices = []
+        if subscription.stripe_subscription_id:
+            try:
+                stripe_details = StripeService.get_subscription_details(subscription.stripe_subscription_id)
+                if subscription.stripe_customer_id:
+                    invoices = StripeService.get_customer_invoices(subscription.stripe_customer_id, limit=5)
+            except Exception as e:
+                logger.error(f"Error fetching Stripe details for subscription {subscription_id}: {e}")
+        
+        context = {
+            'subscription': subscription,
+            'stripe_details': stripe_details,
+            'invoices': invoices,
+            'page_title': f'Subscription - {subscription.church_name}',
+        }
+        
+        return render(request, 'church_directory/subscription_detail.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error viewing subscription detail {subscription_id}: {e}")
+        messages.error(request, 'Failed to load subscription details')
+        return redirect('church_directory:subscription_dashboard')
+
+
+@require_http_methods(["POST"])
+@subscription_auth_required
+def create_customer_portal_session(request, subscription_id):
+    """Create Stripe Customer Portal session for subscription management"""
+    try:
+        subscription = get_object_or_404(Subscription, id=subscription_id)
+        
+        # Verify user owns this subscription
+        user_session = request.session.get('subscription_user')
+        if not user_session or subscription.backend_tenant_slug != user_session.get('organization_schema'):
+            return JsonResponse({'error': 'Unauthorized access to subscription'}, status=403)
+        
+        if not subscription.stripe_customer_id:
+            return JsonResponse({'error': 'No Stripe customer ID found'}, status=400)
+        
+        # Create return URL
+        return_url = request.build_absolute_uri(
+            reverse('church_directory:subscription_detail', kwargs={'subscription_id': subscription_id})
+        )
+        
+        # Create customer portal session
+        portal_url = StripeService.create_customer_portal_session(
+            subscription.stripe_customer_id,
+            return_url
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'portal_url': portal_url
+        })
+        
+    except Exception as e:
+        logger.error(f"Error creating customer portal session for subscription {subscription_id}: {e}")
+        return JsonResponse({'error': 'Failed to create portal session'}, status=500)
+
+
+@require_http_methods(["POST"])
+@subscription_auth_required
+def change_billing_cycle(request, subscription_id):
+    """Change subscription billing cycle between monthly and annual"""
+    try:
+        subscription = get_object_or_404(Subscription, id=subscription_id)
+        
+        # Verify user owns this subscription
+        user_session = request.session.get('subscription_user')
+        if not user_session or subscription.backend_tenant_slug != user_session.get('organization_schema'):
+            return JsonResponse({'error': 'Unauthorized access to subscription'}, status=403)
+        
+        if not subscription.stripe_subscription_id:
+            return JsonResponse({'error': 'No Stripe subscription ID found'}, status=400)
+        
+        if subscription.status != 'active':
+            return JsonResponse({'error': 'Subscription must be active to change billing cycle'}, status=400)
+        
+        data = json.loads(request.body)
+        new_billing_cycle = data.get('billing_cycle')
+        
+        if new_billing_cycle not in ['monthly', 'annual']:
+            return JsonResponse({'error': 'Invalid billing cycle'}, status=400)
+        
+        if new_billing_cycle == subscription.billing_period:
+            return JsonResponse({'error': 'Subscription is already on this billing cycle'}, status=400)
+        
+        # Get the new price based on billing cycle
+        pricing_tier = subscription.pricing_tier
+        if new_billing_cycle == 'annual':
+            new_price = pricing_tier.annual_price
+            # You'll need to map this to Stripe price IDs
+            stripe_price_id = getattr(pricing_tier, 'stripe_annual_price_id', None)
+        else:
+            new_price = pricing_tier.monthly_price  
+            stripe_price_id = getattr(pricing_tier, 'stripe_monthly_price_id', None)
+        
+        if not stripe_price_id:
+            return JsonResponse({'error': 'Stripe price ID not configured for this billing cycle'}, status=400)
+        
+        # Update in Stripe
+        updated_subscription = StripeService.update_subscription_billing_cycle(
+            subscription.stripe_subscription_id,
+            stripe_price_id
+        )
+        
+        # Update local subscription
+        subscription.billing_period = new_billing_cycle
+        subscription.base_amount = new_price
+        subscription.final_amount = new_price  # Assume no discount for simplicity
+        subscription.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Billing cycle changed to {new_billing_cycle}',
+            'new_amount': float(new_price),
+            'next_invoice_amount': updated_subscription.get('latest_invoice', {}).get('amount_due', 0) / 100
+        })
+        
+    except Exception as e:
+        logger.error(f"Error changing billing cycle for subscription {subscription_id}: {e}")
+        return JsonResponse({'error': 'Failed to change billing cycle'}, status=500)
+
+
+@require_http_methods(["GET"])
+def organization_subscription_status_api(request):
+    """
+    API endpoint for backend to check organization subscription status.
+    Used by the church directory backend to verify subscription status.
+    """
+    # Check API key authentication
+    auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+    if not auth_header.startswith('Bearer '):
+        return JsonResponse({'error': 'Missing API key'}, status=401)
+    
+    api_key = auth_header[7:]  # Remove 'Bearer ' prefix
+    expected_api_key = getattr(settings, 'CHURCH_DIRECTORY_INTEGRATION_API_KEY', '')
+    
+    if not expected_api_key or api_key != expected_api_key:
+        return JsonResponse({'error': 'Invalid API key'}, status=401)
+    
+    try:
+        # Get parameters
+        organization_id = request.GET.get('organization_id')
+        schema_name = request.GET.get('schema_name')
+        contact_email = request.GET.get('contact_email')
+        
+        if not any([organization_id, schema_name, contact_email]):
+            return JsonResponse({'error': 'Missing required parameters'}, status=400)
+        
+        # Try to find subscription by various identifiers
+        subscription = None
+        
+        # First try by backend organization ID
+        if organization_id:
+            subscription = Subscription.objects.filter(
+                backend_organization_id=organization_id,
+                status='active'
+            ).first()
+        
+        # Then try by tenant slug
+        if not subscription and schema_name:
+            subscription = Subscription.objects.filter(
+                backend_tenant_slug=schema_name,
+                status='active'
+            ).first()
+        
+        # Finally try by email
+        if not subscription and contact_email:
+            subscription = Subscription.objects.filter(
+                email__iexact=contact_email,
+                status='active'
+            ).first()
+        
+        if not subscription:
+            return JsonResponse({'error': 'Subscription not found'}, status=404)
+        
+        # Return subscription details
+        return JsonResponse({
+            'subscription_id': str(subscription.id),
+            'status': subscription.status,
+            'tier': subscription.pricing_tier.name,
+            'billing_period': subscription.billing_period,
+            'amount': float(subscription.final_amount),
+            'next_billing_date': subscription.next_billing_date.isoformat() if subscription.next_billing_date else None,
+            'start_date': subscription.start_date.isoformat() if subscription.start_date else None,
+            'church_name': subscription.church_name,
+            'contact_name': subscription.contact_name,
+            'email': subscription.email,
+            'backend_integration_status': subscription.backend_integration_status,
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting organization subscription status: {e}")
+        return JsonResponse({'error': 'Failed to get subscription status'}, status=500)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def _render_subscription_dashboard(request, user_session):
+    """Helper method to render subscription dashboard with user session data"""
+    organization_schema = user_session.get('organization_schema')
+    
+    # Get subscription for this organization
+    try:
+        logger.info(f"Looking for subscription with schema: {organization_schema}")
+        subscription = Subscription.objects.filter(
+            backend_tenant_slug=organization_schema,
+            status='active'
+        ).first()
+        
+        logger.info(f"Found subscription: {subscription.id if subscription else None}")
+        
+        if subscription:
+            # Show subscription detail directly
+            try:
+                stripe_details = None
+                invoices = []
+                if subscription.stripe_subscription_id:
+                    try:
+                        from .stripe_service import StripeService
+                        stripe_details = StripeService.get_subscription_details(subscription.stripe_subscription_id)
+                        if subscription.stripe_customer_id:
+                            invoices = StripeService.get_customer_invoices(subscription.stripe_customer_id, limit=5)
+                    except Exception as e:
+                        logger.error(f"Error fetching Stripe details: {e}")
+                
+                context = {
+                    'subscription': subscription,
+                    'stripe_details': stripe_details,
+                    'invoices': invoices,
+                    'user_session': user_session,
+                    'page_title': f'Subscription Management - {subscription.church_name}',
+                }
+                
+                return render(request, 'church_directory/subscription_detail.html', context)
+                
+            except Exception as e:
+                logger.error(f"Error rendering subscription detail: {e}")
+        
+        # No subscription found, show customer portal to start subscription
+        try:
+            config = WebsiteConfig.objects.first()
+        except WebsiteConfig.DoesNotExist:
+            config = None
+        
+        # Get available pricing tiers
+        from .models import PricingTier
+        pricing_tiers = PricingTier.objects.filter(is_active=True)
+        
+        context = {
+            'config': config,
+            'user_session': user_session,
+            'pricing_tiers': pricing_tiers,
+            'organization_name': user_session.get('organization_name'),
+            'page_title': f'Subscription Portal - {user_session.get("organization_name")}',
+        }
+        return render(request, 'church_directory/customer_subscription_portal.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in dashboard rendering: {e}")
+        return redirect('church_directory:subscription_login')
+
+
+@require_http_methods(["GET"])
+def subscription_portal(request):
+    """Subscription portal with mobile authentication - redirect to login"""
+    token = request.GET.get('token')
+    
+    if token:
+        # Check for mobile auth token in database
+        from .models import MobileAuthToken
+        
+        try:
+            auth_token = MobileAuthToken.objects.get(token=token)
+            
+            if not auth_token.is_valid():
+                if auth_token.is_expired():
+                    logger.warning(f"Mobile auth token {token} has expired")
+                else:
+                    logger.warning(f"Mobile auth token {token} already used")
+                auth_token.delete()  # Clean up
+                return redirect('church_directory:subscription_login')
+            
+            # Perform authentication directly instead of redirecting
+            # Use mobile auth data to authenticate with backend
+            backend_service = BackendApiService()
+            auth_result = backend_service.verify_mobile_session(
+                auth_token.user_id,
+                auth_token.organization_schema
+            )
+            
+            if auth_result['success']:
+                # Store user info in session for the new browser session
+                user_session_data = {
+                    'email': auth_result.get('email'),
+                    'user_id': auth_result.get('user_id'),
+                    'organization_schema': auth_token.organization_schema,
+                    'organization_name': auth_token.organization_name,
+                    'authenticated_at': timezone.now().isoformat(),
+                }
+                request.session['subscription_user'] = user_session_data
+                request.session.set_expiry(86400)  # 24 hours session
+                request.session.save()  # Force session save
+                
+                # Mark token as used and clean up
+                auth_token.used = True
+                auth_token.save()
+                
+                logger.info(f"Mobile session verified and authenticated for user: {auth_token.user_id}")
+                
+                # Instead of redirecting, show the dashboard directly
+                # This avoids session continuity issues
+                return _render_subscription_dashboard(request, user_session_data)
+            else:
+                logger.error(f"Backend authentication failed: {auth_result}")
+                auth_token.delete()  # Clean up failed token
+                return redirect('church_directory:subscription_login')
+            
+        except MobileAuthToken.DoesNotExist:
+            logger.warning(f"Mobile auth token {token} not found in database")
+    
+    # If no valid token, redirect to login
+    logger.warning(f"No valid token provided, redirecting to login")
+    return redirect('church_directory:subscription_login')
+
+
+@require_http_methods(["GET", "POST"])
+@csrf_exempt  # Allow API calls without CSRF token
+def subscription_login(request):
+    """Login page for subscription management"""
+    if request.method == 'POST':
+        # Handle JSON API requests
+        if request.content_type == 'application/json':
+            try:
+                import json
+                data = json.loads(request.body)
+                username = data.get('username', '').strip()
+                password = data.get('password', '')
+            except (json.JSONDecodeError, ValueError):
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid JSON data'
+                }, status=400)
+        else:
+            # Handle form POST requests
+            username = request.POST.get('username', '').strip()
+            password = request.POST.get('password', '')
+        
+        if not username or not password:
+            # Return JSON response for API calls
+            if request.content_type == 'application/json':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Please enter both username and password.'
+                }, status=400)
+            
+            # Return HTML response for form submissions
+            context = {
+                'error': 'Please enter both username and password.',
+                'username': username,
+            }
+            return render(request, 'church_directory/subscription_login.html', context)
+        
+        # Authenticate with backend
+        backend_service = BackendApiService()
+        auth_result = backend_service.authenticate_user(username, password)
+        
+        if auth_result['success']:
+            # Store user info in session
+            request.session['subscription_user'] = {
+                'username': username,
+                'email': auth_result.get('email'),
+                'user_id': auth_result.get('user_id'),
+                'organization_schema': auth_result.get('organization_schema'),
+                'organization_name': auth_result.get('organization_name'),
+                'authenticated_at': timezone.now().isoformat(),
+            }
+            
+            # Return JSON response for API calls
+            if request.content_type == 'application/json':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Authentication successful',
+                    'user': {
+                        'username': username,
+                        'email': auth_result.get('email'),
+                        'organization_name': auth_result.get('organization_name'),
+                    },
+                    'redirect_url': reverse('church_directory:subscription_dashboard_authenticated')
+                })
+            
+            # Redirect to subscription dashboard for form submissions
+            return redirect('church_directory:subscription_dashboard_authenticated')
+        else:
+            # Return JSON response for API calls
+            if request.content_type == 'application/json':
+                return JsonResponse({
+                    'success': False,
+                    'error': auth_result.get('error', 'Invalid username or password.')
+                }, status=401)
+            
+            # Return HTML response for form submissions
+            context = {
+                'error': auth_result.get('error', 'Invalid username or password.'),
+                'username': username,
+            }
+            return render(request, 'church_directory/subscription_login.html', context)
+    
+    # GET request - show login form
+    try:
+        config = WebsiteConfig.objects.first()
+    except WebsiteConfig.DoesNotExist:
+        config = None
+    
+    context = {
+        'config': config,
+        'page_title': 'Subscription Login - Church Directory',
+    }
+    
+    return render(request, 'church_directory/subscription_login.html', context)
+
+
+@require_http_methods(["GET"])
+def subscription_auto_login(request):
+    """Auto-login from mobile authentication"""
+    # Check for URL parameters first (new method)
+    user_id = request.GET.get('user_id')
+    organization_schema = request.GET.get('organization_schema')
+    
+    # Fallback to session data (legacy method)
+    mobile_auth_data = request.session.get('mobile_auth_data')
+    
+    logger.info(f"Auto-login attempt - URL params: user_id={user_id is not None}, org_schema={organization_schema is not None}, session_data={mobile_auth_data is not None}")
+    
+    if user_id and organization_schema:
+        # Use URL parameters (new method from mobile app)
+        auth_user_id = user_id
+        auth_org_schema = organization_schema
+    elif mobile_auth_data:
+        # Use session data (legacy method)
+        auth_user_id = mobile_auth_data.get('user_id')
+        auth_org_schema = mobile_auth_data.get('organization_schema')
+    else:
+        logger.warning("No authentication data found in URL params or session")
+        return redirect('church_directory:subscription_login')
+    
+    # Use auth data to authenticate with backend
+    backend_service = BackendApiService()
+    auth_result = backend_service.verify_mobile_session(
+        auth_user_id,
+        auth_org_schema
+    )
+    
+    logger.info(f"Backend auth result: {auth_result}")
+    
+    if auth_result['success']:
+        # Store user info in session
+        request.session['subscription_user'] = {
+            'email': auth_result.get('email'),
+            'user_id': auth_result.get('user_id'),
+            'organization_schema': auth_org_schema,
+            'organization_name': auth_result.get('organization_name'),
+            'authenticated_at': timezone.now().isoformat(),
+        }
+        
+        # Clean up mobile auth data from session if it exists
+        if 'mobile_auth_data' in request.session:
+            del request.session['mobile_auth_data']
+        
+        logger.info("Auto-login successful, redirecting to dashboard")
+        # Redirect to subscription dashboard
+        return redirect('church_directory:subscription_dashboard_authenticated')
+    else:
+        logger.error(f"Backend authentication failed: {auth_result}")
+        # Clean up and redirect to manual login
+        if 'mobile_auth_data' in request.session:
+            del request.session['mobile_auth_data']
+        return redirect('church_directory:subscription_login')
+
+
+@require_http_methods(["GET"])
+@subscription_auth_required
+def subscription_dashboard_authenticated(request):
+    """Authenticated subscription dashboard"""
+    user_session = request.session.get('subscription_user')
+    
+    logger.info(f"Subscription dashboard access, user_session: {user_session is not None}")
+    
+    if not user_session:
+        logger.warning("No user session found, redirecting to login")
+        return redirect('church_directory:subscription_login')
+    
+    organization_schema = user_session.get('organization_schema')
+    logger.info(f"Looking for subscription for schema: {organization_schema}")
+    
+    # Get subscription for this organization
+    try:
+        subscription = Subscription.objects.filter(
+            backend_tenant_slug=organization_schema,
+            status='active'
+        ).first()
+        
+        if subscription:
+            logger.info(f"Found subscription {subscription.id}, redirecting to detail view")
+            return redirect('church_directory:subscription_detail', subscription_id=subscription.id)
+        else:
+            logger.info("No active subscription found, showing dashboard template")
+            # No active subscription found
+            try:
+                config = WebsiteConfig.objects.first()
+            except WebsiteConfig.DoesNotExist:
+                config = None
+            
+            context = {
+                'config': config,
+                'user_session': user_session,
+                'error': 'No active subscription found for your organization.',
+                'page_title': 'Subscription Dashboard - Church Directory',
+            }
+            return render(request, 'church_directory/subscription_dashboard.html', context)
+            
+    except Exception as e:
+        logger.error(f"Error finding subscription for schema {organization_schema}: {e}")
+        logger.warning("Exception in dashboard, redirecting to login")
+        return redirect('church_directory:subscription_login')
+
+
+# API endpoints for syncing data to backend
+def api_pricing_tiers(request):
+    """API endpoint to get pricing tiers for syncing to backend"""
+    # Check API key authentication
+    auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+    if not auth_header.startswith('Bearer '):
+        return JsonResponse({'error': 'Missing API key'}, status=401)
+    
+    api_key = auth_header[7:]  # Remove 'Bearer ' prefix
+    expected_api_key = getattr(settings, 'CHURCH_DIRECTORY_INTEGRATION_API_KEY', '')
+    
+    if not expected_api_key or api_key != expected_api_key:
+        return JsonResponse({'error': 'Invalid API key'}, status=401)
+    
+    try:
+        tiers = PricingTier.objects.filter(is_active=True)
+        tiers_data = []
+        
+        for tier in tiers:
+            tiers_data.append({
+                'id': tier.id,
+                'name': tier.name,
+                'description': tier.description,
+                'max_users': tier.max_users,
+                'monthly_price': float(tier.monthly_price),
+                'annual_price': float(tier.annual_price) if tier.annual_price else None,
+                'features': tier.features,  # JSON field with feature list
+                'is_popular': tier.is_popular,
+                'is_active': tier.is_active,
+                'sort_order': tier.sort_order,
+                'created_at': tier.created_at.isoformat(),
+                'updated_at': tier.updated_at.isoformat(),
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'tiers': tiers_data,
+            'count': len(tiers_data)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching pricing tiers for API: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+def api_features(request):
+    """API endpoint to get features for syncing to backend"""
+    # Check API key authentication
+    auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+    if not auth_header.startswith('Bearer '):
+        return JsonResponse({'error': 'Missing API key'}, status=401)
+    
+    api_key = auth_header[7:]  # Remove 'Bearer ' prefix
+    expected_api_key = getattr(settings, 'CHURCH_DIRECTORY_INTEGRATION_API_KEY', '')
+    
+    if not expected_api_key or api_key != expected_api_key:
+        return JsonResponse({'error': 'Invalid API key'}, status=401)
+    
+    try:
+        from .models import Feature
+        features = Feature.objects.filter(is_active=True)
+        features_data = []
+        
+        for feature in features:
+            features_data.append({
+                'id': feature.id,
+                'title': feature.title,
+                'description': feature.description,
+                'icon': feature.icon,
+                'featured_on_homepage': feature.featured_on_homepage,
+                'is_active': feature.is_active,
+                'order': feature.order,
+                'created_at': feature.created_at.isoformat(),
+                'updated_at': feature.updated_at.isoformat(),
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'features': features_data,
+            'count': len(features_data)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching features for API: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

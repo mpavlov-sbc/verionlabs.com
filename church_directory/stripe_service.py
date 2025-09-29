@@ -6,21 +6,120 @@ reliability and security. Key changes:
 
 - create_checkout_session() replaces create_payment_intent()
 - Users are redirected to Stripe's hosted checkout page
-- Payment processing is handled entirely by Stripe
-- Webhook events handle payment completion
-- Simplified error handling and better UX
+- Better handling of international payments and regulations
+- Enhanced webhook processing for subscription management
 
-For more details, see: STRIPE_CHECKOUT_GUIDE.md
+Key Features:
+- Subscription management with Customer Portal
+- Coupon code support
+- Billing cycle changes (monthly/annual)
+- Comprehensive webhook handling
+- Payment retry mechanisms
 """
 
 import stripe
 import logging
 from decimal import Decimal
+from typing import Dict, Any, Optional, Union, List, Tuple
 from django.conf import settings
 from django.utils import timezone
-from typing import Dict, Any, Optional, Tuple
+import uuid
+
+logger = logging.getLogger(__name__)
+
+# Import models (do this after logger to avoid circular imports)
 from .models import Subscription, PricingTier, Coupon, PaymentIntent, WebhookEvent
 from .backend_api import BackendApiService
+
+# Configure Stripe
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
+
+class StripeService:
+    """Service class for Stripe operations"""
+    
+    @staticmethod
+    def cancel_subscription(subscription_id: str) -> Dict[str, Any]:
+        """Cancel a Stripe subscription"""
+        try:
+            cancelled_subscription = stripe.Subscription.cancel(subscription_id)
+            logger.info(f"Cancelled Stripe subscription {subscription_id}")
+            return cancelled_subscription
+        except stripe.error.StripeError as e:
+            logger.error(f"Failed to cancel subscription {subscription_id}: {e}")
+            raise
+    
+    @staticmethod
+    def create_customer_portal_session(customer_id: str, return_url: str) -> str:
+        """Create a Stripe Customer Portal session for subscription management"""
+        try:
+            session = stripe.billing_portal.Session.create(
+                customer=customer_id,
+                return_url=return_url,
+            )
+            logger.info(f"Created customer portal session for customer {customer_id}")
+            return session.url
+        except stripe.error.StripeError as e:
+            logger.error(f"Failed to create customer portal session for {customer_id}: {e}")
+            raise
+    
+    @staticmethod
+    def update_subscription_billing_cycle(subscription_id: str, new_price_id: str) -> Dict[str, Any]:
+        """Update subscription billing cycle (monthly to annual or vice versa)"""
+        try:
+            # Retrieve current subscription
+            subscription = stripe.Subscription.retrieve(subscription_id)
+            
+            # Update the subscription with new price
+            updated_subscription = stripe.Subscription.modify(
+                subscription_id,
+                items=[{
+                    'id': subscription['items']['data'][0]['id'],
+                    'price': new_price_id,
+                }],
+                proration_behavior='create_prorations',  # Handle prorated charges
+            )
+            
+            logger.info(f"Updated subscription {subscription_id} billing cycle to price {new_price_id}")
+            return updated_subscription
+        except stripe.error.StripeError as e:
+            logger.error(f"Failed to update subscription billing cycle for {subscription_id}: {e}")
+            raise
+    
+    @staticmethod
+    def get_customer_invoices(customer_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get recent invoices for a customer"""
+        try:
+            invoices = stripe.Invoice.list(
+                customer=customer_id,
+                limit=limit,
+                status='paid'
+            )
+            logger.info(f"Retrieved {len(invoices.data)} invoices for customer {customer_id}")
+            return invoices.data
+        except stripe.error.StripeError as e:
+            logger.error(f"Failed to get invoices for customer {customer_id}: {e}")
+            raise
+    
+    @staticmethod
+    def get_subscription_details(subscription_id: str) -> Dict[str, Any]:
+        """Get detailed subscription information from Stripe"""
+        try:
+            subscription = stripe.Subscription.retrieve(
+                subscription_id,
+                expand=['customer', 'latest_invoice', 'default_payment_method']
+            )
+            logger.info(f"Retrieved subscription details for {subscription_id}")
+            return subscription
+        except stripe.error.StripeError as e:
+            logger.error(f"Failed to get subscription details for {subscription_id}: {e}")
+            raise
+
+
+# Configure Stripe API
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
+logger = logging.getLogger(__name__)
 
 
 try:
@@ -324,6 +423,10 @@ class StripeService:
                     success = StripeService._handle_subscription_updated(event, webhook_event)
                 elif event_type == 'customer.subscription.deleted':
                     success = StripeService._handle_subscription_deleted(event, webhook_event)
+                elif event_type == 'customer.updated':
+                    success = StripeService._handle_customer_updated(event, webhook_event)
+                elif event_type == 'payment_method.attached':
+                    success = StripeService._handle_payment_method_attached(event, webhook_event)
                 else:
                     logger.info(f"Unhandled webhook event type: {event_type}")
                     webhook_event.processed = True
@@ -795,6 +898,9 @@ class StripeService:
                 
                 logger.info(f"Updated subscription {subscription.id} status to {subscription.status}")
                 
+                # Sync changes with backend
+                StripeService._sync_subscription_with_backend(subscription)
+                
             except Subscription.DoesNotExist:
                 logger.error(f"Subscription not found for Stripe subscription {subscription_id}")
             
@@ -827,6 +933,9 @@ class StripeService:
                 
                 logger.info(f"Cancelled subscription {subscription.id}")
                 
+                # Sync changes with backend
+                StripeService._sync_subscription_with_backend(subscription)
+                
             except Subscription.DoesNotExist:
                 logger.error(f"Subscription not found for Stripe subscription {subscription_id}")
             
@@ -840,4 +949,110 @@ class StripeService:
             logger.error(f"Error handling customer.subscription.deleted: {e}")
             webhook_event.processing_error = str(e)
             webhook_event.save()
+            return False
+    
+    @staticmethod
+    def _handle_customer_updated(event: Dict[str, Any], webhook_event: WebhookEvent) -> bool:
+        """Handle customer information updates"""
+        try:
+            customer = event['data']['object']
+            customer_id = customer['id']
+            
+            # Update all subscriptions for this customer
+            subscriptions = Subscription.objects.filter(stripe_customer_id=customer_id)
+            
+            for subscription in subscriptions:
+                # Update customer details if changed
+                if customer.get('email') and customer['email'] != subscription.email:
+                    logger.info(f"Updating email for subscription {subscription.id}: {subscription.email} -> {customer['email']}")
+                    subscription.email = customer['email']
+                
+                if customer.get('name') and customer['name'] != subscription.contact_name:
+                    logger.info(f"Updating contact name for subscription {subscription.id}: {subscription.contact_name} -> {customer['name']}")
+                    subscription.contact_name = customer['name']
+                
+                subscription.save()
+            
+            webhook_event.processed = True
+            webhook_event.processed_at = timezone.now()
+            webhook_event.save()
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error handling customer.updated: {e}")
+            webhook_event.processing_error = str(e)
+            webhook_event.save()
+            return False
+    
+    @staticmethod
+    def _handle_payment_method_attached(event: Dict[str, Any], webhook_event: WebhookEvent) -> bool:
+        """Handle new payment method being attached to customer"""
+        try:
+            payment_method = event['data']['object']
+            customer_id = payment_method.get('customer')
+            
+            if customer_id:
+                # Update subscriptions to track new payment method
+                subscriptions = Subscription.objects.filter(stripe_customer_id=customer_id)
+                
+                for subscription in subscriptions:
+                    subscription.stripe_payment_method_id = payment_method['id']
+                    subscription.save()
+                    logger.info(f"Updated payment method for subscription {subscription.id}")
+            
+            webhook_event.processed = True
+            webhook_event.processed_at = timezone.now()
+            webhook_event.save()
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error handling payment_method.attached: {e}")
+            webhook_event.processing_error = str(e)
+            webhook_event.save()
+            return False
+    
+    @staticmethod
+    def _sync_subscription_with_backend(subscription: 'Subscription') -> bool:
+        """
+        Synchronize subscription changes with the backend church directory system.
+        Called after subscription status changes.
+        """
+        try:
+            if not subscription.backend_organization_id:
+                logger.info(f"No backend organization for subscription {subscription.id}, skipping sync")
+                return True
+            
+            from .backend_api import BackendApiService
+            backend_api = BackendApiService()
+            
+            # Prepare subscription data for backend
+            sync_data = {
+                'status': subscription.status,
+                'tier': subscription.pricing_tier.name,
+                'billing_period': subscription.billing_period,
+                'amount': float(subscription.final_amount),
+                'next_billing_date': subscription.next_billing_date.isoformat() if subscription.next_billing_date else None,
+                'start_date': subscription.start_date.isoformat() if subscription.start_date else None,
+                'end_date': subscription.end_date.isoformat() if subscription.end_date else None,
+                'last_updated': timezone.now().isoformat()
+            }
+            
+            # Update backend with new subscription status
+            success, response = backend_api.update_subscription_status(
+                subscription.backend_organization_id,
+                subscription.status,
+                sync_data
+            )
+            
+            if success:
+                logger.info(f"Successfully synced subscription {subscription.id} with backend")
+                return True
+            else:
+                logger.error(f"Failed to sync subscription {subscription.id} with backend: {response}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error syncing subscription {subscription.id} with backend: {e}")
             return False
