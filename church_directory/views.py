@@ -799,10 +799,18 @@ def subscription_dashboard(request):
 
 
 @require_http_methods(["GET"])
+@subscription_auth_required
 def subscription_detail(request, subscription_id):
     """Detailed view of a specific subscription for management"""
     try:
         subscription = get_object_or_404(Subscription, id=subscription_id)
+        
+        # Verify user owns this subscription (authorization check)
+        user_session = request.session.get('subscription_user')
+        if not user_session or subscription.backend_tenant_slug != user_session.get('organization_schema'):
+            logger.warning(f"Unauthorized access attempt to subscription {subscription_id} by user {user_session}")
+            messages.error(request, 'You do not have permission to view this subscription.')
+            return redirect('church_directory:subscription_login')
         
         # Get Stripe subscription details if available
         stripe_details = None
